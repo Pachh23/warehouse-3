@@ -1,0 +1,124 @@
+/*#root {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 2rem;
+  text-align: center;
+}
+
+.logo {
+  height: 6em;
+  padding: 1.5em;
+  will-change: filter;
+  transition: filter 300ms;
+}
+.logo:hover {
+  filter: drop-shadow(0 0 2em #646cffaa);
+}
+.logo.react:hover {
+  filter: drop-shadow(0 0 2em #61dafbaa);
+}
+
+@keyframes logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  a:nth-of-type(2) .logo {
+    animation: logo-spin infinite 20s linear;
+  }
+}
+
+.card {
+  padding: 2em;
+}
+
+.read-the-docs {
+  color: #888;
+}
+*/
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  display: flex;
+}
+
+/* Sidebar Styles */
+.sidebar {
+  width: 250px;
+  background-color: #333;
+  color: #fff;
+  padding-top: 20px;
+  height: 100vh;
+  position: fixed;
+}
+
+.sidebar a {
+  padding: 15px;
+  text-decoration: none;
+  color: #fff;
+  display: block;
+}
+
+.sidebar a:hover {
+  background-color: #575757;
+}
+
+/* Main Content Styles */
+.main-content {
+  margin-left: 250px;
+  padding: 20px;
+  width: 100%;
+}
+
+h2 {
+  color: #333;
+}
+
+/* Table Styles */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+}
+
+table, th, td {
+  border: 1px solid #ddd;
+  padding: 8px;
+}
+
+th {
+  background-color: #f2f2f2;
+  color: #333;
+}
+/* สไตล์พื้นฐานสำหรับหน้า */
+.container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh; /* ให้ความสูงเต็มหน้าจอ */
+}
+.header {
+  background-color: #10515F; /* สีพื้นหลังของแท็บ */
+  color: white;
+  padding: 0px; /* เพิ่ม padding เพื่อไม่ให้ข้อความติดขอบ */
+  text-align: right;
+  font-size: 12px;
+  position: fixed; /* ทำให้แถบอยู่คงที่ที่ด้านบน */
+  top: 0; /* ทำให้แถบอยู่ที่ด้านบนสุดของหน้า */
+  left: 0; /* ทำให้แถบเริ่มต้นจากทางซ้ายสุด */
+  width: 100%; /* ให้แถบกว้างเต็มหน้าจอ */
+  z-index: 1000; /* ตั้งค่าระดับเลเยอร์เพื่อให้แถบไม่ถูกทับ */
+}
+
+.main-content {
+  margin-top: 100px; /* เพิ่มระยะห่างจากด้านบนเพื่อไม่ให้เนื้อหาถูกบัง */
+  background-color: #f4f4f4; /* สีพื้นหลังของพื้นที่ว่าง */
+  padding: 20px;
+  text-align: center;
+}
+
