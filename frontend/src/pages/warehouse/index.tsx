@@ -430,7 +430,6 @@ const WarehouseManagement: React.FC = () => {
             width: '150px',
             height: 'auto',
             marginLeft: '-10px',
-            marginBottom: '0px'
           }}
         />
         <h2>Add New Warehouse</h2>

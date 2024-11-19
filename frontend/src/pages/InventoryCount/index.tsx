@@ -4,6 +4,7 @@ import { Layout, Typography, Input, Button, Table, Space, Image, Modal, Form, Se
 import { PlusOutlined, SearchOutlined, UserOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import logo from "../../assets/logo.png";
+import w1 from "../../assets/w1.png"
 
 const { Header, Content } = Layout;
 const { Title, Paragraph } = Typography;
@@ -273,95 +274,152 @@ const InventoryCount: React.FC = () => {
   };
 
   return (
-    <Layout style={{ minHeight: '100vh' }}>
-      <Header style={{ 
-        background: '#10515F',
+    <Layout style={{ minHeight: '100vh', backgroundColor: '#FFFFFF' }}>
+      <Header style={{
+        position: 'relative',
+        background: `url(${w1}) no-repeat center center`,
+        backgroundSize: 'cover',
         padding: '0 50px',
-        height: '50vh',
-        color: 'white'
+        height: '50vh', // Overall height of the header
+        color: 'white',
       }}>
-        <div style={{ 
-          display: 'flex', 
-          justifyContent: 'space-between', 
-          alignItems: 'center',
-          padding: '16px 0'
+        {/* First Overlay Layer (semi-transparent color) */}
+        <div style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          height: '12vh', // Match the height of the header
+          background: 'rgba(16, 81, 95, 0.9)', // Semi-transparent background color (adjust opacity)
+          zIndex: 1,
         }}>
-          <div style={{ 
-            display: 'flex', 
-            alignItems: 'center', 
-            gap: '16px',
-            marginLeft: '-50px'
-          }}>
-            <WarehouseLogo />
-            <Title level={2} style={{ margin: 0, color: 'white', marginLeft: '-30px' }}>WAREHOUSE</Title>
-          </div>
-          <UserOutlined style={{ color: 'white', fontSize: '40px' }} />
         </div>
 
-        <div style={{ maxWidth: '800px', marginTop: '64px', marginBottom: '32px' }}>
-          <Title level={2} style={{ color: 'white', marginBottom: '16px' }}>
-            OUR TEAM
-          </Title>
-          <Paragraph style={{ color: 'white', fontSize: '16px' }}>
-            If you're stressed about work, don't quit just yet—
-            because if you do, you'll end up stressing about money too.
-          </Paragraph>
+      <div style={{
+        position: 'relative',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        padding: '16px 0',
+        zIndex: 2,
+      }}>
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '16px',
+          marginLeft: '-50px'
+        }}>
+          <WarehouseLogo />
+          <Title level={2} style={{ margin: 0, color: 'white', marginLeft: '-30px',  marginTop: '-40px' }}>WAREHOUSE</Title>
         </div>
+        <UserOutlined style={{ color: 'white', fontSize: '40px',  marginTop: '-40px' }} />
+      </div>
+      <div style={{
+        maxWidth: '800px',
+        marginTop: '64px',
+        marginBottom: '32px',
+        zIndex: 4,  // ค่า z-index ที่สูงสุด
+        position: 'relative',  // ตั้งค่า position ให้เป็น relative เพื่อให้ z-index ทำงาน
+      }}>
+        <Title level={1} style={{
+          color: 'white',
+          marginBottom: '16px',
+          position: 'relative',
+          left: '90px', // ขยับเฉพาะ Title ไปทางขวา 30px
+        }}>
+          OUR TEAM
+        </Title>
+        <Paragraph style={{
+          color: 'white',
+          fontSize: '16px',
+          position: 'relative',
+          left: '90px', // ขยับเฉพาะ Paragraph ไปทางขวา 50px
+        }}>
+          If you're stressed about work, don't quit just yet—
+          because if you do, you'll end up stressing about money too.
+        </Paragraph>
+      </div>
+      <Space 
+        direction="vertical" 
+        size={20} 
+        style={{
+          marginLeft: '90px', // ขยับ Space ไปทางขวา 50px
+        }}
+      >
+        <Input.Search
+          placeholder="Search warehouses..."
+          allowClear
+          enterButton={
+            <Button 
+              type="primary" 
+              icon={<SearchOutlined />}
+              style={{ borderRadius: 0 ,backgroundColor: '#FF7236',}} // ปรับปุ่มให้เป็นเหลี่ยม
+            >
+              Search
+            </Button>
+          }
+          size="large"
+          style={{
+            width: '800px',
+            borderRadius: 0, // ทำให้ input เป็นเหลี่ยม
+          }}
+          onSearch={handleSearch}
+          onChange={(e) => handleSearch(e.target.value)}
+        />
+        
+      </Space>
 
-        <Space direction="vertical" size={20}>
-          <Input.Search
-            placeholder="Search warehouses..."
-            allowClear
-            enterButton={<Button type="primary" icon={<SearchOutlined />}>Search</Button>}
-            size="large"
-            style={{
-              width: '500px'
-            }}
-            onSearch={handleSearch}
-            onChange={(e) => handleSearch(e.target.value)}
-          />
-        </Space>
       </Header>
 
       <Content style={{ padding: '24px 50px' }}>
-        <Button
-          type="primary"
-          icon={<PlusOutlined />}
-          size="large"
-          style={{ 
-            marginBottom: '24px',
-            background: '#10515F'
-          }}
-          onClick={handleAddWarehouse}
-        >
-          New Warehouse
-        </Button>
-          <Card>
-          <Table<Warehouse>
-  columns={columns}
-  dataSource={filteredWarehouses}
-  pagination={{
-    total: filteredWarehouses.length,
-    pageSize: 10,
-    showSizeChanger: true,
-    showQuickJumper: true,
-  }}
-  size="middle"
-  scroll={{ x: 'max-content' }}
-  style={{ border: 'none' }}
-/>
+      <Button
+        type="primary"
+        icon={<PlusOutlined />}
+        size="large"
+        style={{ 
+          marginBottom: '24px',
+          background: '#10515F',
+          marginLeft: '90px', // ขยับปุ่มไปทางขวา
+          borderRadius: '0px', // กำหนดให้ปุ่มเป็นเหลี่ยม
+          width: '250px', // กำหนดความกว้างของปุ่ม
+          height: '50px'
+        }}
+        onClick={handleAddWarehouse}
+      >
+        New Warehouse
+      </Button>
+      <Card >
+      <Table<Warehouse>
+        columns={columns}
+        dataSource={filteredWarehouses}
+        pagination={{
+          total: filteredWarehouses.length,
+          pageSize: 10,
+          showSizeChanger: true,
+          showQuickJumper: true,
+        }}
+        size="middle"
+        scroll={{ x: 'max-content' }}
+        style={{ border: 'none' }}
+      />
 
-        </Card>
+      </Card>
       </Content>
 
       <Modal
         visible={isModalVisible}
         onOk={handleModalOk}
         onCancel={handleModalCancel}
-        okText="Add"
+        okText="Save"
         cancelText="Cancel"
+        okButtonProps={{
+          style: { backgroundColor: '#FF7236', color: 'white', borderColor: '#FF7236' }, // สีปุ่ม OK
+        }}
+        cancelButtonProps={{
+          style: { backgroundColor: '#FFFFFF', color: 'black', borderColor: '#FF7236' }, // สีปุ่ม Cancel
+        }}
       >
-      <div style={{ display: 'flex', alignItems: 'center', marginBottom: '0rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', marginBottom: '0rem' }}>
         <img 
           alt="Logo"
           src={logo}
@@ -373,7 +431,7 @@ const InventoryCount: React.FC = () => {
         />
         <h2>Add New Warehouse</h2>
       </div>
-        <Form form={form} layout="vertical">
+      <Form form={form} layout="vertical">
         <Form.Item
             name="name"
             label="Warehouse Name"
