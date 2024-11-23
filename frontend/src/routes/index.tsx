@@ -1,6 +1,9 @@
 import { Routes, Route } from "react-router-dom";
-import WarehouseManagement from "../pages/warehouse/index";  // นำเข้า Warehouse component
+import { lazy } from "react";
+import Loadable from "../components/third-patry/Loadable";
+//import WarehouseManagement from "../pages/warehouse/index";  // นำเข้า Warehouse component
 import InventoryCount from "../pages/InventoryCount/index";  // นำเข้า InventoryCount component
+const WarehouseManagement = Loadable(lazy(() => import("../pages/warehouse")));
 
 const ConfigRoutes: React.FC = () => {
   return (
