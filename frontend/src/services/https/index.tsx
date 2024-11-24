@@ -24,6 +24,13 @@ async function GetWarehouseTypes() {
     .catch((e) => e.response);
 }
 
+async function GetWarehouseStatuses() {
+  return await axios
+    .get(`${apiUrl}/warehouseStatuses`)
+    .then((res) => res)
+    .catch((e) => e.response);
+}
+
 async function GetWarehouses() {
   return await axios
     .get(`${apiUrl}/warehouses`)
@@ -57,6 +64,7 @@ async function CreateWarehouse(data: WarehousesInterface) {
 export {
   GetProvince,
   GetWarehouseTypes,
+  GetWarehouseStatuses,
   GetWarehouses,
   GetWarehousesById,
   UpdateWarehousesById,

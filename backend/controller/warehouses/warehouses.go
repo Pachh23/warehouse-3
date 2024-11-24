@@ -11,7 +11,7 @@ import (
 func GetAll(c *gin.Context) {
 	var warehouses []entity.Warehouses
 	db := config.DB()
-	results := db.Preload("Province").Preload("WarehouseType").Find(&warehouses)
+	results := db.Preload("Province").Preload("WarehouseType").Preload("WarehouseStatus").Find(&warehouses)
 	if results.Error != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": results.Error.Error()})
 		return
@@ -38,10 +38,7 @@ func Get(c *gin.Context) {
 	}
 
 	// ส่งข้อมูล Warehouse พร้อมสถานะ
-	c.JSON(http.StatusOK, gin.H{
-		"Warehouse":       warehouse,
-		"WarehouseStatus": warehouse.WarehouseStatus, // แสดงค่า WarehouseStatus
-	})
+	c.JSON(http.StatusOK, gin.H{})
 }
 
 func Update(c *gin.Context) {

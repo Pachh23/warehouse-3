@@ -56,7 +56,7 @@ function WarehouseManagement() {
 
   const columns: ColumnsType<WarehousesInterface> = [
     {
-      title: 'Warehouse ID',
+      title: 'ID',
       dataIndex: 'warehouse_id',
       key: 'warehouse_id',
       width: 150,
@@ -76,7 +76,7 @@ function WarehouseManagement() {
       render: (record) => {
         // กำหนดสีตามประเภท WarehouseType
         const type = record?.warehouse_type?.warehouse_type;
-        let color = 'purple'; // ค่า default
+        let color = 'black'; // ค่า default
         if (type === 'Cold Storage') {
           color = 'blue';
         } else if (type === 'Dry Storage') {
@@ -88,70 +88,65 @@ function WarehouseManagement() {
         }
     
         return (
-          <Tag color={color}>
+          <Tag bordered={true} color={color}>
             {type}
           </Tag>
         );
       },
-    }
-,    
+    },    
     {
       title: 'Capacity (m³)',
       dataIndex: 'capacity',
       key: 'capacity',
       sorter: (a, b) => (a.Capacity || 0) - (b.Capacity || 0),
       render: (capacity) => (
-        <span style={{ fontWeight: 'bold', color: '#1890ff' }}>
+        <span style={{ fontWeight: 'bold', color: 'black' }}>
           {capacity} m³
         </span>
       ),
     },
     {
       title: 'Status',
-      dataIndex: 'WarehouseStatus',
-      key: 'WarehouseStatus',
-      filters: [
-        { text: 'Active', value: true },
-        { text: 'Inactive', value: false },
-      ],
-      onFilter: (value, record) => record.WarehouseStatus === value, // กรองโดยตรงตามค่า boolean
-      width: 150,
-      render: (status: any) => {
-        // แปลงค่าของ status ให้เป็น boolean
-        const isActive = status === true || status === 'true' || status === 1;
-        
+      key: 'warehouse_status',
+      render: (record) => {
+        // ดึงค่า warehouse_status
+        const status = record?.warehouse_status?.warehouse_status; // สมมติว่า warehouse_status เป็น string
+        let color = 'black'; // ค่า default
+        // กำหนดสีตาม status
+        if (status === 'Available') {
+          color = '#52c41a';
+        } else if (status === 'Full') {
+          color = '#f5222d';
+        } else if (status === 'Nearly Full') {
+          color = 'orange';
+        } else if (status === 'Empty') {
+          color = '#1677ff';
+        }
+        //#52c41a
+        // Render สถานะพร้อมสี
         return (
           <span
             style={{
-              color: isActive ? '#52c41a' : '#ff4d4f',  // สีเขียวถ้า Active, สีแดงถ้า Inactive
-              fontWeight: 500,
+              color: color,
+              fontWeight: 550,
+              textTransform: 'capitalize', // ทำให้ตัวอักษรขึ้นต้นด้วยตัวใหญ่
             }}
           >
-            {isActive ? 'Active' : 'Inactive'}
+            {status}
           </span>
         );
       },
-    },
+    },    
     {
       title: 'Address',
-      dataIndex: 'address',
-      key: 'address',
-      render: (address, record) => {
-        const addressParts = [];
-        if (address) addressParts.push(address);
-        if (record.Zipcode) addressParts.push(record.Zipcode);
-        if (record.ProvinceID) addressParts.push(record.ProvinceID);
-        
-        // If some parts are missing, join the available parts with commas
-        return (
-          <div style={{ maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-            {addressParts.join(', ') || 'Not available'}
-          </div>
-        );
-      },
+      //dataIndex: 'address',  // ใช้ `Address` เป็น `dataIndex`
+      key: 'address',        // ใช้ `address` เป็น `key`
+      render: (record) => (
+        <div style={{ maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+          {record.address}, {record.zipcode}, {record?.province?.province}
+        </div>
+      ),
     },
-    
-    
     {
       title: 'Action',
       key: 'action',
@@ -309,12 +304,14 @@ function WarehouseManagement() {
       >
         New Warehouse
       </Button>
+      <Card >
         <Table
           columns={columns}
           dataSource={warehouses}
           pagination={{ pageSize: 10 }}
           rowKey="WarehouseID"
         />
+      </Card>
       </Content>
     </Layout>
   );

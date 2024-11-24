@@ -27,6 +27,7 @@ func SetupDatabase() {
 	db.AutoMigrate(
 		&entity.Provinces{},
 		&entity.WarehouseTypes{},
+		&entity.WarehouseStatuses{},
 		&entity.Warehouses{},
 	)
 
@@ -35,6 +36,13 @@ func SetupDatabase() {
 	for _, wType := range warehouseTypes {
 		db.FirstOrCreate(&entity.WarehouseTypes{WarehouseType: wType}, &entity.WarehouseTypes{WarehouseType: wType})
 	}
+
+	//----------------WarehouseStatus-------------//
+	warehouseStatuses := []string{"Available", "Full", "Nearly Full", "Empty"}
+	for _, wStatus := range warehouseStatuses {
+		db.FirstOrCreate(&entity.WarehouseStatuses{WarehouseStatus: wStatus}, &entity.WarehouseStatuses{WarehouseStatus: wStatus})
+	}
+
 	//----------------Provinces-------------//
 	provinces := []string{
 		"Amnat Charoen", "Ang Thong", "Bangkok", "Bueng Kan", "Buriram",
@@ -60,14 +68,14 @@ func SetupDatabase() {
 	}
 
 	Warehouse := &entity.Warehouses{
-		WarehouseID:     "W001", // สร้าง UUID ใหม่เป็นสตริง
-		WarehouseName:   "Warehouse A",
-		WarehouseTypeID: 1,
-		Capacity:        500, // หน่วย: m³ (ลูกบาศก์เมตร)
-		WarehouseStatus: true,
-		Address:         "123/4, Soi Sukhumvit 22, Sukhumvit Road, Khlong Tan Nuea, Watthana",
-		Zipcode:         "10110",
-		ProvinceID:      3,
+		WarehouseID:       "W001", // สร้าง UUID ใหม่เป็นสตริง
+		WarehouseName:     "Warehouse A",
+		WarehouseTypeID:   3,
+		Capacity:          500, // หน่วย: m³ (ลูกบาศก์เมตร)
+		WarehouseStatusID: 1,
+		Address:           "123/4 Sukhumvit 22, Khlong Tan Nuea, Watthana",
+		Zipcode:           "10110",
+		ProvinceID:        3,
 	}
 	db.FirstOrCreate(Warehouse, &entity.Warehouses{
 		WarehouseID: Warehouse.WarehouseName,
