@@ -1,9 +1,12 @@
 import { useState, useEffect, useMemo } from "react";
-import { Layout, Typography, Input, Button, Table, Space, Image, Modal, Form, Select, Tag, Card, message } from 'antd';
+import { Layout, Typography, Input, Button, Table, Space, Image, Modal, Form, Select, Tag, Card, message, InputNumber } from 'antd';
 import { PlusOutlined, SearchOutlined, UserOutlined, DeleteTwoTone, DeleteFilled, EditTwoTone } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import logo from "../../assets/logo.png";
 import w1 from "../../assets/w1.png";
+import { GetWarehouseTypes,GetWarehouseStatuses,GetProvince,CreateWarehouse } from '../../services/https';
+import { WarehouseStatusesInterface } from "../../interfaces/WarehouseStatuses";
+import { ProvinceInterface } from "../../interfaces/Province";
 import { WarehousesInterface } from "../../interfaces/Warehouses";
 import { WarehouseTypesInterface } from "../../interfaces/WarehouseTypes";
 import { GetWarehouses, DeleteWarehousesById } from "../../services/https";
@@ -32,51 +35,122 @@ function WarehouseManagement() {
   const [messageApi, contextHolder] = message.useMessage();
   const myId = localStorage.getItem("id");
   const [searchQuery, setSearchQuery] = useState('');
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [warehouseStatus, setWarehouseStatus] = useState<WarehouseStatusesInterface[]>([]);
+  const [warehouseType, setWarehouseType] = useState<WarehouseTypesInterface[]>([]);
+  const [province, setGetProvince] = useState<ProvinceInterface[]>([]);
+  const [form] = Form.useForm();
 
-  // Filter warehouses based on search query
+
+//---------onGetWarehouseStatus--------//
+const onGetWarehouseStatus = async () => {
+  let res = await GetWarehouseStatuses();
+  if (res.status == 200) {
+    setWarehouseStatus(res.data);
+  } else {
+    messageApi.open({
+      type: "error",
+      content: "ไม่พบข้อมูลสถานะ",
+    });
+    setTimeout(() => {
+      navigate("/warehouse");
+    }, 2000);
+  }
+};
+
+//---------GetWarehouseTypes--------//
+const onGetWarehouseType = async () => {
+let res = await GetWarehouseTypes();
+if (res.status == 200) {
+  setWarehouseType(res.data);
+} else {
+  messageApi.open({
+    type: "error",
+    content: "ไม่พบข้อมูลสถานะ",
+  });
+  setTimeout(() => {
+    navigate("/warehouse");
+  }, 2000);
+}
+};
+
+//---------onGetProvince--------//
+const onGetProvince = async () => {
+let res = await GetProvince();
+if (res.status == 200) {
+  setGetProvince(res.data);
+} else {
+  messageApi.open({
+    type: "error",
+    content: "ไม่พบข้อมูลสถานะ",
+  });
+  setTimeout(() => {
+    navigate("/warehouse");
+  }, 2000);
+}
+};
+
+useEffect(() => {
+  onGetWarehouseStatus(),onGetWarehouseType(),onGetProvince();
+  return () => {};
+}, []);
+  // ใช้ useMemo เพื่อ optimize performance ในการ filter ข้อมูล
   const filteredWarehouses = useMemo(() => {
-    const lowercaseQuery = searchQuery.toLowerCase().trim(); 
-
+    const lowercaseQuery = searchQuery.toLowerCase().trim();
+  
     if (!lowercaseQuery) {
       return warehouses;
     }
-
+  
     return warehouses.filter((warehouse) => {
-      return (
-        warehouse.WarehouseName?.toLowerCase().includes(lowercaseQuery) ||
-        warehouse.WarehouseID?.toLowerCase().includes(lowercaseQuery) ||
-        warehouse.Address?.toLowerCase().includes(lowercaseQuery)
-      );
+      // เพิ่มเงื่อนไขในการค้นหาให้ครอบคลุมทุกฟิลด์ที่ต้องการ
+      const searchableFields = [
+        warehouse.WarehouseName?.toLowerCase() || '',
+        warehouse.Address?.toLowerCase() || '',
+        warehouse.ID?.toString() || '',
+        warehouse.Zipcode?.toString() || '',
+        warehouse.Capacity?.toString() || ''
+      ];
+      
+      // ค้นหาจากทุกฟิลด์ที่กำหนด
+      return searchableFields.some(field => field.includes(lowercaseQuery));
     });
   }, [warehouses, searchQuery]);
 
   const handleSearch = (value: string) => {
     setSearchQuery(value);
   };
-
+  
   const columns: ColumnsType<WarehousesInterface> = [
     {
-      title: 'Warehouse ID',
-      dataIndex: 'warehouse_id',
-      key: 'warehouse_id',
-      width: 150,
-      sorter: (a, b) => a.WarehouseID?.localeCompare(b.WarehouseID || '') || 0,
-    },
+      title: 'ID',
+      dataIndex: 'ID',
+      key: 'id',
+      width: 80,
+      sorter: (a, b) => {
+        if (a.ID === undefined) return 1;
+        if (b.ID === undefined) return -1;
+        return a.ID - b.ID;
+      },
+    },      
     {
       title: 'Warehouse Name',
-      dataIndex: 'warehouse_name',
+      dataIndex: 'warehouse_name',  // แก้ไขจาก WarehouseName
       key: 'warehouse_name',
-      width: 200,
-      sorter: (a, b) => a.WarehouseName?.localeCompare(b.WarehouseName || '') || 0,
-      render: (text) => <strong>{text}</strong>,
-    },
+      // ...
+      sorter: (a, b) => {
+        if (!a.WarehouseName || !b.WarehouseName) {  // แก้ไขการอ้างอิง
+          return 0;
+        }
+        return a.WarehouseName.localeCompare(b.WarehouseName);  // แก้ไขการอ้างอิง
+      },
+    },  
     {
       title: 'Type',
-      key: 'warehouse_type',
+      key: 'WarehouseType',
       render: (record) => {
-        // กำหนดสีตามประเภท WarehouseType
-        const type = record?.warehouse_type?.warehouse_type;
-        let color = 'purple'; // ค่า default
+        const type = record?.WarehouseType?.WarehouseType;
+        let color = 'black';
         if (type === 'Cold Storage') {
           color = 'blue';
         } else if (type === 'Dry Storage') {
@@ -84,95 +158,84 @@ function WarehouseManagement() {
         } else if (type === 'Hazardous Storage') {
           color = 'red';
         } else if (type === 'Bulk Storage') {
-          color = 'orange'; // ใช้สีส้มสำหรับ Bulk Storage
+          color = 'orange';
         }
     
         return (
-          <Tag color={color}>
+          <Tag bordered={true} color={color}>
             {type}
           </Tag>
         );
       },
-    }
-,    
+    },    
     {
       title: 'Capacity (m³)',
       dataIndex: 'capacity',
       key: 'capacity',
       sorter: (a, b) => (a.Capacity || 0) - (b.Capacity || 0),
       render: (capacity) => (
-        <span style={{ fontWeight: 'bold', color: '#1890ff' }}>
+        <span style={{ fontWeight: 'bold', color: 'black' }}>
           {capacity} m³
         </span>
       ),
     },
     {
       title: 'Status',
-      dataIndex: 'WarehouseStatus',
       key: 'WarehouseStatus',
-      filters: [
-        { text: 'Active', value: true },
-        { text: 'Inactive', value: false },
-      ],
-      onFilter: (value, record) => record.WarehouseStatus === value, // กรองโดยตรงตามค่า boolean
       width: 150,
-      render: (status: any) => {
-        // แปลงค่าของ status ให้เป็น boolean
-        const isActive = status === true || status === 'true' || status === 1;
-        
+      render: (record) => {
+        const status = record?.WarehouseStatus?.WarehouseStatus;
+        let color = 'black';
+        if (status === 'Available') {
+          color = '#52c41a';
+        } else if (status === 'Full') {
+          color = '#f5222d';
+        } else if (status === 'Nearly Full') {
+          color = 'orange';
+        } else if (status === 'Empty') {
+          color = '#1677ff';
+        }
         return (
           <span
             style={{
-              color: isActive ? '#52c41a' : '#ff4d4f',  // สีเขียวถ้า Active, สีแดงถ้า Inactive
-              fontWeight: 500,
+              color: color,
+              fontWeight: 550,
+              textTransform: 'capitalize',
             }}
           >
-            {isActive ? 'Active' : 'Inactive'}
+            {status}
           </span>
         );
       },
-    },
+    },    
     {
       title: 'Address',
-      dataIndex: 'address',
       key: 'address',
-      render: (address, record) => {
-        const addressParts = [];
-        if (address) addressParts.push(address);
-        if (record.Zipcode) addressParts.push(record.Zipcode);
-        if (record.ProvinceID) addressParts.push(record.ProvinceID);
-        
-        // If some parts are missing, join the available parts with commas
-        return (
-          <div style={{ maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-            {addressParts.join(', ') || 'Not available'}
-          </div>
-        );
-      },
+      render: (record) => (
+        <div style={{ maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+          {record.address}, {record.zipcode}, {record?.province?.province}
+        </div>
+      ),
     },
-    
-    
     {
       title: 'Action',
       key: 'action',
       width: 140,
-      render: (_, record) => (
+      render: (record) => (
         <Space size="middle">
           <Button type="link"><EditTwoTone twoToneColor="#10515F" /></Button>
-          <Button
-            type="link"
-            //onClick={() => handleDeleteWarehouse(record.WarehouseID)}
-          >
+          <Button onClick={() => deleteUserById(record.ID)}>
             <DeleteTwoTone twoToneColor="#FF7236" />
           </Button>
         </Space>
       ),
     },
-  ];const getWarehouses = async () => {
+  ];
+
+  const getWarehouses = async () => {
     let res = await GetWarehouses();
-  
     if (res.status === 200) {
-      console.log('Warehouses data:', res.data); // ตรวจสอบข้อมูลที่ได้รับจาก API
+      console.log('Warehouses data:', res.data);
       setWarehouses(res.data);
     } else {
       setWarehouses([]);
@@ -187,20 +250,57 @@ function WarehouseManagement() {
     getWarehouses();
   }, []);
   
-  const handleDeleteWarehouse = async (warehouseId: string) => {
-    const res = await DeleteWarehousesById(warehouseId);
-    if (res.status === 200) {
-      getWarehouses(); // Refetch warehouses after deletion
+  const deleteUserById = async (id: string) => {
+    let res = await DeleteWarehousesById(id);
+    if (res.status == 200) {
+      messageApi.open({
+        type: "success",
+        content: res.data.message,
+      });
+      await getWarehouses();
     } else {
       messageApi.open({
         type: "error",
-        content: "Failed to delete warehouse",
+        content: res.data.error,
       });
     }
+  };
+  
+  const handleAddWarehouse = () => {
+    setIsModalVisible(true);
+  };
+
+  const handleModalOk = () => {
+    form
+      .validateFields()
+      .then((values) => {
+        const { province, zipcode } = values;
+        const address = `${values.address}, ${province}, ${zipcode}`;
+        
+        setWarehouses([
+          ...warehouses,
+          {
+            key: Date.now().toString(),
+            id: `W-${warehouses.length + 1}`,
+            ...values,
+            address,
+          },
+        ]);
+        form.resetFields();
+        setIsModalVisible(false);
+      })
+      .catch((info) => {
+        console.log('Validate Failed:', info);
+      });
+  };
+
+  const handleModalCancel = () => {
+    setIsModalVisible(false);
   };
 
   return (
     <Layout style={{ minHeight: '100vh', backgroundColor: '#FFFFFF' }}>
+      {contextHolder}
       <Header style={{
         position: 'relative',
         background: `url(${w1}) no-repeat center center`,
@@ -270,54 +370,174 @@ function WarehouseManagement() {
           }}
         >
           <Input.Search
-          placeholder="Search warehouses..."
-          allowClear
-          enterButton={
-            <Button 
-              type="primary" 
-              icon={<SearchOutlined />}
-              style={{ borderRadius: 0 ,backgroundColor: '#FF7236',}} // ปรับปุ่มให้เป็นเหลี่ยม
-            >
-              Search
-            </Button>
-          }
-          size="large"
-          style={{
-            width: '800px',
-            borderRadius: 0, // ทำให้ input เป็นเหลี่ยม
-          }}
-          onSearch={handleSearch}
-          onChange={(e) => handleSearch(e.target.value)}
-        />
+            placeholder="Search warehouses..."
+            allowClear
+            enterButton={
+              <Button 
+                type="primary" 
+                icon={<SearchOutlined />}
+                style={{ borderRadius: 0, backgroundColor: '#FF7236' }}
+              >
+                Search
+              </Button>
+            }
+            size="large"
+            style={{
+              width: '800px',
+              borderRadius: 0,
+            }}
+            onSearch={handleSearch}
+            onChange={(e) => handleSearch(e.target.value)}
+          />
         </Space>
       </Header>
 
-      <Content style={{ padding: '24px 50px' }}>
-      <Button
-        type="primary"
-        icon={<PlusOutlined />}
-        size="large"
-        style={{ 
-          marginBottom: '24px',
-          background: '#10515F',
-          marginLeft: '90px', // ขยับปุ่มไปทางขวา
-          borderRadius: '0px', // กำหนดให้ปุ่มเป็นเหลี่ยม
-          width: '250px', // กำหนดความกว้างของปุ่ม
-          height: '50px'
-        }}
-        //onClick={handleAddWarehouse}
-      >
-        New Warehouse
-      </Button>
-        <Table
-          columns={columns}
-          dataSource={warehouses}
-          pagination={{ pageSize: 10 }}
-          rowKey="WarehouseID"
-        />
+      <Content style={{ padding: '24px 50px' }}> 
+          <Button
+            type="primary"
+            icon={<PlusOutlined />}
+            size="large"
+            style={{ 
+              marginBottom: '24px',
+              background: '#10515F',
+              marginLeft: '90px',
+              borderRadius: '0px',
+              width: '250px',
+              height: '50px'
+            }}
+            onClick={handleAddWarehouse}
+          >
+            New Warehouse
+          </Button>
+      <Card>
+          <Table
+            columns={columns}
+            dataSource={filteredWarehouses}
+            pagination={{ pageSize: 10 }}
+            rowKey="ID"
+          />
+        </Card>
       </Content>
+
+      <Modal
+        visible={isModalVisible}
+        onOk={handleModalOk}
+        onCancel={handleModalCancel}
+        okText="Save"
+        cancelText="Cancel"
+        okButtonProps={{
+          style: { backgroundColor: '#FF7236', color: 'white', borderColor: '#FF7236' }, // สีปุ่ม OK
+        }}
+        cancelButtonProps={{
+          style: { backgroundColor: '#FFFFFF', color: 'black', borderColor: '#FF7236' }, // สีปุ่ม Cancel
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', marginBottom: '0rem' }}>
+        <img 
+          alt="Logo"
+          src={logo}
+          style={{
+            width: '150px',
+            height: 'auto',
+            marginLeft: '-10px',
+          }}
+        />
+        <h2>Add New Warehouse</h2>
+      </div>
+      <Form form={form} layout="vertical">
+        <Form.Item
+            name="name"
+            label="Warehouse Name"
+            rules={[{ required: true, message: 'Please input the warehouse name!' }]}
+          >
+            <Input />
+          </Form.Item>
+          <Form.Item
+            name="type"
+            label="Type"
+            rules={[{ required: true, message: 'Please select warehouse type!' }]}
+          >
+            <Select defaultValue="" style={{ width: "100%" }}>
+                  {warehouseType?.map((item) => (
+                    <Select.Option
+                      value={item?.ID}
+                    >
+                      {item?.WarehouseType}
+                    </Select.Option>
+                  ))}
+              </Select>
+          </Form.Item>
+          <Form.Item
+            name="capacity"
+            label="Capacity"
+            rules={[{ required: true, message: 'Please input the warehouse capacity!' }]}
+          >
+            <InputNumber
+                  min={0}
+                  //max={99}
+                  defaultValue={0}
+                  style={{ width: "100%" }}
+                />
+          </Form.Item>
+          <Form.Item
+            name="WarehouseStatusID"
+            label="Status"
+            rules={[{ required: true, message: 'Please select warehouse status!' }]}
+          >
+            <Select defaultValue="" style={{ width: "100%" }}>
+                  {warehouseStatus?.map((item) => (
+                    <Select.Option
+                      value={item?.ID}
+                    >
+                      {item?.WarehouseStatus}
+                    </Select.Option>
+                  ))}
+                </Select>
+          </Form.Item>
+          <Form.Item
+            name="address"
+            label="Address"
+            rules={[{ required: true, message: 'Please input the warehouse address!' }]}
+          >
+            <Input />
+          </Form.Item>
+          <Form.Item
+            name="ProvinceID"
+            label="Province"
+            rules={[{ required: true, message: 'Please select the province!' }]}
+          >
+            <Select defaultValue="" style={{ width: "100%" }}>
+                  {province?.map((item) => (
+                    <Select.Option
+                      value={item?.ID}
+                    >
+                      {item?.Province}
+                    </Select.Option>
+                  ))}
+                </Select>
+          </Form.Item>
+          <Form.Item
+            name="zipcode"
+            label="Zipcode"
+            rules={[
+              { 
+                required: true, 
+                message: 'Please input the zipcode!' 
+              },
+              { 
+                pattern: /^\d{5}$/, 
+                message: 'Zipcode must be 5 digits!' 
+              }
+            ]}
+          >
+            <Input 
+              type="text" // ใช้ type="text" แทน type="number" เพื่อให้สามารถใช้ pattern ได้
+            />
+          </Form.Item>
+        </Form>
+      </Modal>
     </Layout>
   );
-};
+}
 
 export default WarehouseManagement;

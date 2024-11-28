@@ -6,6 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"warehouse.com/warehouse/config"
 	"warehouse.com/warehouse/controller/provinces"
+	"warehouse.com/warehouse/controller/warehouseStatuses"
 	"warehouse.com/warehouse/controller/warehouseTypes"
 	"warehouse.com/warehouse/controller/warehouses"
 )
@@ -20,16 +21,17 @@ func main() {
 	r := gin.Default()
 	r.Use(CORSMiddleware())
 	// Auth Route
-	r.POST("/warehouses", warehouses.Create)
+	r.POST("/warehouses-create", warehouses.Create)
 	router := r.Group("/")
 	{
 		// Warehouse Route
-		router.PUT("/warehouse/:warehouse_id", warehouses.Update)
+		router.PUT("/warehouse/:id", warehouses.Update)
 		router.GET("/warehouses", warehouses.GetAll)
-		router.GET("/warehouse/:warehouse_id", warehouses.Get)
-		router.DELETE("/warehouse/:warehouse_id", warehouses.Delete)
+		router.GET("/warehouse/:id", warehouses.Get)
+		router.DELETE("/warehouse/:id", warehouses.Delete)
 	}
 	r.GET("/warehouseTypes", warehouseTypes.GetAll)
+	r.GET("/warehouseStatuses", warehouseStatuses.GetAll)
 	r.GET("/provinces", provinces.GetAll)
 	r.GET("/", func(c *gin.Context) {
 		c.String(http.StatusOK, "API RUNNING... PORT: %s", PORT)
@@ -37,6 +39,7 @@ func main() {
 	// Run the server
 	r.Run("localhost:" + PORT)
 }
+
 func CORSMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		c.Writer.Header().Set("Access-Control-Allow-Origin", "*")

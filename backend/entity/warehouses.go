@@ -1,25 +1,24 @@
 package entity
 
 import (
-	"fmt"
-
 	"gorm.io/gorm"
 )
 
 type Warehouses struct {
 	gorm.Model
-	WarehouseID     string          `json:"warehouse_id" gorm:"primaryKey"`
-	WarehouseName   string          `json:"warehouse_name" gorm:"unique"`
-	WarehouseTypeID uint            `json:"warehouse_type_id"`
-	Capacity        float64         `json:"capacity"` // หน่วย: m³ (ลูกบาศก์เมตร)
-	WarehouseStatus bool            `json:"warehouse_status"`
-	Address         string          `json:"address"`
-	Zipcode         string          `json:"zipcode"`
-	ProvinceID      uint            `json:"province_id"`
-	Province        *Provinces      `gorm:"foreignKey: province_id" json:"province"`
-	WarehouseType   *WarehouseTypes `gorm:"foreignKey: warehouse_type_id" json:"warehouse_type"`
+	WarehouseName     string `json:"warehouse_name" gorm:"unique"`
+	WarehouseTypeID   uint
+	Capacity          float64 `json:"capacity"` // หน่วย: m³ (ลูกบาศก์เมตร)
+	WarehouseStatusID uint
+	Address           string `json:"address"`
+	Zipcode           string `json:"zipcode"`
+	ProvinceID        uint
+	Province          *Provinces         `gorm:"foreignKey: ProvinceID" `
+	WarehouseType     *WarehouseTypes    `gorm:"foreignKey: WarehouseTypeID" `
+	WarehouseStatus   *WarehouseStatuses `gorm:"foreignKey: WarehouseStatusID" `
 }
 
+/*
 // BeforeCreate hook เพื่อสร้าง WarehouseID อัตโนมัติ
 func (w *Warehouses) BeforeCreate(tx *gorm.DB) (err error) {
 	var count int64
@@ -30,3 +29,4 @@ func (w *Warehouses) BeforeCreate(tx *gorm.DB) (err error) {
 	w.WarehouseID = fmt.Sprintf("W%03d", count+1)
 	return
 }
+*/
