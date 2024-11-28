@@ -6,16 +6,16 @@ import (
 
 type Warehouses struct {
 	gorm.Model
-	WarehouseName     string             `json:"warehouse_name" gorm:"unique"`
-	WarehouseTypeID   uint               `json:"warehouse_type_id"`
-	Capacity          float64            `json:"capacity"` // หน่วย: m³ (ลูกบาศก์เมตร)
-	WarehouseStatusID uint               `json:"warehouse_status_id"`
-	Address           string             `json:"address"`
-	Zipcode           string             `json:"zipcode"`
-	ProvinceID        uint               `json:"province_id"`
-	Province          *Provinces         `gorm:"foreignKey: province_id" json:"province"`
-	WarehouseType     *WarehouseTypes    `gorm:"foreignKey: warehouse_type_id" json:"warehouse_type"`
-	WarehouseStatus   *WarehouseStatuses `gorm:"foreignKey: warehouse_status_id" json:"warehouse_status"`
+	WarehouseName     string `json:"warehouse_name" gorm:"unique"`
+	WarehouseTypeID   uint
+	Capacity          float64 `json:"capacity"` // หน่วย: m³ (ลูกบาศก์เมตร)
+	WarehouseStatusID uint
+	Address           string `json:"address"`
+	Zipcode           string `json:"zipcode"`
+	ProvinceID        uint
+	Province          *Provinces         `gorm:"foreignKey: ProvinceID" `
+	WarehouseType     *WarehouseTypes    `gorm:"foreignKey: WarehouseTypeID" `
+	WarehouseStatus   *WarehouseStatuses `gorm:"foreignKey: WarehouseStatusID" `
 }
 
 /*

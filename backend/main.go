@@ -21,7 +21,7 @@ func main() {
 	r := gin.Default()
 	r.Use(CORSMiddleware())
 	// Auth Route
-	r.POST("/warehouses", warehouses.Create)
+	r.POST("/warehouses-create", warehouses.Create)
 	router := r.Group("/")
 	{
 		// Warehouse Route

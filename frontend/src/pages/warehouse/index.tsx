@@ -1,9 +1,12 @@
 import { useState, useEffect, useMemo } from "react";
-import { Layout, Typography, Input, Button, Table, Space, Image, Modal, Form, Select, Tag, Card, message } from 'antd';
+import { Layout, Typography, Input, Button, Table, Space, Image, Modal, Form, Select, Tag, Card, message, InputNumber } from 'antd';
 import { PlusOutlined, SearchOutlined, UserOutlined, DeleteTwoTone, DeleteFilled, EditTwoTone } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import logo from "../../assets/logo.png";
 import w1 from "../../assets/w1.png";
+import { GetWarehouseTypes,GetWarehouseStatuses,GetProvince,CreateWarehouse } from '../../services/https';
+import { WarehouseStatusesInterface } from "../../interfaces/WarehouseStatuses";
+import { ProvinceInterface } from "../../interfaces/Province";
 import { WarehousesInterface } from "../../interfaces/Warehouses";
 import { WarehouseTypesInterface } from "../../interfaces/WarehouseTypes";
 import { GetWarehouses, DeleteWarehousesById } from "../../services/https";
@@ -32,7 +35,65 @@ function WarehouseManagement() {
   const [messageApi, contextHolder] = message.useMessage();
   const myId = localStorage.getItem("id");
   const [searchQuery, setSearchQuery] = useState('');
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [warehouseStatus, setWarehouseStatus] = useState<WarehouseStatusesInterface[]>([]);
+  const [warehouseType, setWarehouseType] = useState<WarehouseTypesInterface[]>([]);
+  const [province, setGetProvince] = useState<ProvinceInterface[]>([]);
+  const [form] = Form.useForm();
 
+
+//---------onGetWarehouseStatus--------//
+const onGetWarehouseStatus = async () => {
+  let res = await GetWarehouseStatuses();
+  if (res.status == 200) {
+    setWarehouseStatus(res.data);
+  } else {
+    messageApi.open({
+      type: "error",
+      content: "ไม่พบข้อมูลสถานะ",
+    });
+    setTimeout(() => {
+      navigate("/warehouse");
+    }, 2000);
+  }
+};
+
+//---------GetWarehouseTypes--------//
+const onGetWarehouseType = async () => {
+let res = await GetWarehouseTypes();
+if (res.status == 200) {
+  setWarehouseType(res.data);
+} else {
+  messageApi.open({
+    type: "error",
+    content: "ไม่พบข้อมูลสถานะ",
+  });
+  setTimeout(() => {
+    navigate("/warehouse");
+  }, 2000);
+}
+};
+
+//---------onGetProvince--------//
+const onGetProvince = async () => {
+let res = await GetProvince();
+if (res.status == 200) {
+  setGetProvince(res.data);
+} else {
+  messageApi.open({
+    type: "error",
+    content: "ไม่พบข้อมูลสถานะ",
+  });
+  setTimeout(() => {
+    navigate("/warehouse");
+  }, 2000);
+}
+};
+
+useEffect(() => {
+  onGetWarehouseStatus(),onGetWarehouseType(),onGetProvince();
+  return () => {};
+}, []);
   // ใช้ useMemo เพื่อ optimize performance ในการ filter ข้อมูล
   const filteredWarehouses = useMemo(() => {
     const lowercaseQuery = searchQuery.toLowerCase().trim();
@@ -86,9 +147,9 @@ function WarehouseManagement() {
     },  
     {
       title: 'Type',
-      key: 'warehouse_type',
+      key: 'WarehouseType',
       render: (record) => {
-        const type = record?.warehouse_type?.warehouse_type;
+        const type = record?.WarehouseType?.WarehouseType;
         let color = 'black';
         if (type === 'Cold Storage') {
           color = 'blue';
@@ -120,10 +181,10 @@ function WarehouseManagement() {
     },
     {
       title: 'Status',
-      key: 'warehouse_status',
+      key: 'WarehouseStatus',
       width: 150,
       render: (record) => {
-        const status = record?.warehouse_status?.warehouse_status;
+        const status = record?.WarehouseStatus?.WarehouseStatus;
         let color = 'black';
         if (status === 'Available') {
           color = '#52c41a';
@@ -173,7 +234,6 @@ function WarehouseManagement() {
 
   const getWarehouses = async () => {
     let res = await GetWarehouses();
-  
     if (res.status === 200) {
       console.log('Warehouses data:', res.data);
       setWarehouses(res.data);
@@ -206,6 +266,38 @@ function WarehouseManagement() {
     }
   };
   
+  const handleAddWarehouse = () => {
+    setIsModalVisible(true);
+  };
+
+  const handleModalOk = () => {
+    form
+      .validateFields()
+      .then((values) => {
+        const { province, zipcode } = values;
+        const address = `${values.address}, ${province}, ${zipcode}`;
+        
+        setWarehouses([
+          ...warehouses,
+          {
+            key: Date.now().toString(),
+            id: `W-${warehouses.length + 1}`,
+            ...values,
+            address,
+          },
+        ]);
+        form.resetFields();
+        setIsModalVisible(false);
+      })
+      .catch((info) => {
+        console.log('Validate Failed:', info);
+      });
+  };
+
+  const handleModalCancel = () => {
+    setIsModalVisible(false);
+  };
+
   return (
     <Layout style={{ minHeight: '100vh', backgroundColor: '#FFFFFF' }}>
       {contextHolder}
@@ -300,23 +392,24 @@ function WarehouseManagement() {
         </Space>
       </Header>
 
-      <Content style={{ padding: '24px 50px' }}>
-        <Button
-          type="primary"
-          icon={<PlusOutlined />}
-          size="large"
-          style={{ 
-            marginBottom: '24px',
-            background: '#10515F',
-            marginLeft: '90px',
-            borderRadius: '0px',
-            width: '250px',
-            height: '50px'
-          }}
-        >
-          New Warehouse
-        </Button>
-        <Card>
+      <Content style={{ padding: '24px 50px' }}> 
+          <Button
+            type="primary"
+            icon={<PlusOutlined />}
+            size="large"
+            style={{ 
+              marginBottom: '24px',
+              background: '#10515F',
+              marginLeft: '90px',
+              borderRadius: '0px',
+              width: '250px',
+              height: '50px'
+            }}
+            onClick={handleAddWarehouse}
+          >
+            New Warehouse
+          </Button>
+      <Card>
           <Table
             columns={columns}
             dataSource={filteredWarehouses}
@@ -325,6 +418,124 @@ function WarehouseManagement() {
           />
         </Card>
       </Content>
+
+      <Modal
+        visible={isModalVisible}
+        onOk={handleModalOk}
+        onCancel={handleModalCancel}
+        okText="Save"
+        cancelText="Cancel"
+        okButtonProps={{
+          style: { backgroundColor: '#FF7236', color: 'white', borderColor: '#FF7236' }, // สีปุ่ม OK
+        }}
+        cancelButtonProps={{
+          style: { backgroundColor: '#FFFFFF', color: 'black', borderColor: '#FF7236' }, // สีปุ่ม Cancel
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', marginBottom: '0rem' }}>
+        <img 
+          alt="Logo"
+          src={logo}
+          style={{
+            width: '150px',
+            height: 'auto',
+            marginLeft: '-10px',
+          }}
+        />
+        <h2>Add New Warehouse</h2>
+      </div>
+      <Form form={form} layout="vertical">
+        <Form.Item
+            name="name"
+            label="Warehouse Name"
+            rules={[{ required: true, message: 'Please input the warehouse name!' }]}
+          >
+            <Input />
+          </Form.Item>
+          <Form.Item
+            name="type"
+            label="Type"
+            rules={[{ required: true, message: 'Please select warehouse type!' }]}
+          >
+            <Select defaultValue="" style={{ width: "100%" }}>
+                  {warehouseType?.map((item) => (
+                    <Select.Option
+                      value={item?.ID}
+                    >
+                      {item?.WarehouseType}
+                    </Select.Option>
+                  ))}
+              </Select>
+          </Form.Item>
+          <Form.Item
+            name="capacity"
+            label="Capacity"
+            rules={[{ required: true, message: 'Please input the warehouse capacity!' }]}
+          >
+            <InputNumber
+                  min={0}
+                  //max={99}
+                  defaultValue={0}
+                  style={{ width: "100%" }}
+                />
+          </Form.Item>
+          <Form.Item
+            name="WarehouseStatusID"
+            label="Status"
+            rules={[{ required: true, message: 'Please select warehouse status!' }]}
+          >
+            <Select defaultValue="" style={{ width: "100%" }}>
+                  {warehouseStatus?.map((item) => (
+                    <Select.Option
+                      value={item?.ID}
+                    >
+                      {item?.WarehouseStatus}
+                    </Select.Option>
+                  ))}
+                </Select>
+          </Form.Item>
+          <Form.Item
+            name="address"
+            label="Address"
+            rules={[{ required: true, message: 'Please input the warehouse address!' }]}
+          >
+            <Input />
+          </Form.Item>
+          <Form.Item
+            name="ProvinceID"
+            label="Province"
+            rules={[{ required: true, message: 'Please select the province!' }]}
+          >
+            <Select defaultValue="" style={{ width: "100%" }}>
+                  {province?.map((item) => (
+                    <Select.Option
+                      value={item?.ID}
+                    >
+                      {item?.Province}
+                    </Select.Option>
+                  ))}
+                </Select>
+          </Form.Item>
+          <Form.Item
+            name="zipcode"
+            label="Zipcode"
+            rules={[
+              { 
+                required: true, 
+                message: 'Please input the zipcode!' 
+              },
+              { 
+                pattern: /^\d{5}$/, 
+                message: 'Zipcode must be 5 digits!' 
+              }
+            ]}
+          >
+            <Input 
+              type="text" // ใช้ type="text" แทน type="number" เพื่อให้สามารถใช้ pattern ได้
+            />
+          </Form.Item>
+        </Form>
+      </Modal>
     </Layout>
   );
 }
