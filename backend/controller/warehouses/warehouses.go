@@ -20,7 +20,7 @@ func GetAll(c *gin.Context) {
 
 }
 func Get(c *gin.Context) {
-	ID := c.Param("warehouse_id")
+	ID := c.Param("id")
 	var warehouse entity.Warehouses
 	db := config.DB()
 	results := db.Preload("Province").Preload("WarehouseType").First(&warehouse, ID)
@@ -43,7 +43,7 @@ func Get(c *gin.Context) {
 
 func Update(c *gin.Context) {
 	var warehouse entity.Warehouses
-	WarehouseID := c.Param("warehouse_id")
+	WarehouseID := c.Param("id")
 	db := config.DB()
 	result := db.First(&warehouse, WarehouseID)
 	if result.Error != nil {
@@ -63,9 +63,9 @@ func Update(c *gin.Context) {
 }
 
 func Delete(c *gin.Context) {
-	id := c.Param("warehouse_id")
+	id := c.Param("id")
 	db := config.DB()
-	if tx := db.Exec("DELETE FROM warehouses WHERE warehouse_id = ?", id); tx.RowsAffected == 0 {
+	if tx := db.Exec("DELETE FROM warehouses WHERE id = ?", id); tx.RowsAffected == 0 {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "id not found"})
 		return
 	}

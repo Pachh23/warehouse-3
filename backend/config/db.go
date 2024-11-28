@@ -68,7 +68,6 @@ func SetupDatabase() {
 	}
 
 	Warehouse := &entity.Warehouses{
-		WarehouseID:       "W001", // สร้าง UUID ใหม่เป็นสตริง
 		WarehouseName:     "Warehouse A",
 		WarehouseTypeID:   3,
 		Capacity:          500, // หน่วย: m³ (ลูกบาศก์เมตร)
@@ -78,7 +77,7 @@ func SetupDatabase() {
 		ProvinceID:        3,
 	}
 	db.FirstOrCreate(Warehouse, &entity.Warehouses{
-		WarehouseID: Warehouse.WarehouseName,
+		WarehouseName: "Warehouse A",
 	})
 
 }

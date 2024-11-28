@@ -25,10 +25,10 @@ func main() {
 	router := r.Group("/")
 	{
 		// Warehouse Route
-		router.PUT("/warehouse/:warehouse_id", warehouses.Update)
+		router.PUT("/warehouse/:id", warehouses.Update)
 		router.GET("/warehouses", warehouses.GetAll)
-		router.GET("/warehouse/:warehouse_id", warehouses.Get)
-		router.DELETE("/warehouse/:warehouse_id", warehouses.Delete)
+		router.GET("/warehouse/:id", warehouses.Get)
+		router.DELETE("/warehouse/:id", warehouses.Delete)
 	}
 	r.GET("/warehouseTypes", warehouseTypes.GetAll)
 	r.GET("/warehouseStatuses", warehouseStatuses.GetAll)

@@ -33,50 +33,63 @@ function WarehouseManagement() {
   const myId = localStorage.getItem("id");
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Filter warehouses based on search query
+  // ใช้ useMemo เพื่อ optimize performance ในการ filter ข้อมูล
   const filteredWarehouses = useMemo(() => {
-    const lowercaseQuery = searchQuery.toLowerCase().trim(); 
-
+    const lowercaseQuery = searchQuery.toLowerCase().trim();
+  
     if (!lowercaseQuery) {
       return warehouses;
     }
-
+  
     return warehouses.filter((warehouse) => {
-      return (
-        warehouse.WarehouseName?.toLowerCase().includes(lowercaseQuery) ||
-        warehouse.WarehouseID?.toLowerCase().includes(lowercaseQuery) ||
-        warehouse.Address?.toLowerCase().includes(lowercaseQuery)
-      );
+      // เพิ่มเงื่อนไขในการค้นหาให้ครอบคลุมทุกฟิลด์ที่ต้องการ
+      const searchableFields = [
+        warehouse.WarehouseName?.toLowerCase() || '',
+        warehouse.Address?.toLowerCase() || '',
+        warehouse.ID?.toString() || '',
+        warehouse.Zipcode?.toString() || '',
+        warehouse.Capacity?.toString() || ''
+      ];
+      
+      // ค้นหาจากทุกฟิลด์ที่กำหนด
+      return searchableFields.some(field => field.includes(lowercaseQuery));
     });
   }, [warehouses, searchQuery]);
 
   const handleSearch = (value: string) => {
     setSearchQuery(value);
   };
-
+  
   const columns: ColumnsType<WarehousesInterface> = [
     {
       title: 'ID',
-      dataIndex: 'warehouse_id',
-      key: 'warehouse_id',
-      width: 150,
-      sorter: (a, b) => a.WarehouseID?.localeCompare(b.WarehouseID || '') || 0,
-    },
+      dataIndex: 'ID',
+      key: 'id',
+      width: 80,
+      sorter: (a, b) => {
+        if (a.ID === undefined) return 1;
+        if (b.ID === undefined) return -1;
+        return a.ID - b.ID;
+      },
+    },      
     {
       title: 'Warehouse Name',
-      dataIndex: 'warehouse_name',
+      dataIndex: 'warehouse_name',  // แก้ไขจาก WarehouseName
       key: 'warehouse_name',
-      width: 200,
-      sorter: (a, b) => a.WarehouseName?.localeCompare(b.WarehouseName || '') || 0,
-      render: (text) => <strong>{text}</strong>,
-    },
+      // ...
+      sorter: (a, b) => {
+        if (!a.WarehouseName || !b.WarehouseName) {  // แก้ไขการอ้างอิง
+          return 0;
+        }
+        return a.WarehouseName.localeCompare(b.WarehouseName);  // แก้ไขการอ้างอิง
+      },
+    },  
     {
       title: 'Type',
       key: 'warehouse_type',
       render: (record) => {
-        // กำหนดสีตามประเภท WarehouseType
         const type = record?.warehouse_type?.warehouse_type;
-        let color = 'black'; // ค่า default
+        let color = 'black';
         if (type === 'Cold Storage') {
           color = 'blue';
         } else if (type === 'Dry Storage') {
@@ -84,7 +97,7 @@ function WarehouseManagement() {
         } else if (type === 'Hazardous Storage') {
           color = 'red';
         } else if (type === 'Bulk Storage') {
-          color = 'orange'; // ใช้สีส้มสำหรับ Bulk Storage
+          color = 'orange';
         }
     
         return (
@@ -108,11 +121,10 @@ function WarehouseManagement() {
     {
       title: 'Status',
       key: 'warehouse_status',
+      width: 150,
       render: (record) => {
-        // ดึงค่า warehouse_status
-        const status = record?.warehouse_status?.warehouse_status; // สมมติว่า warehouse_status เป็น string
-        let color = 'black'; // ค่า default
-        // กำหนดสีตาม status
+        const status = record?.warehouse_status?.warehouse_status;
+        let color = 'black';
         if (status === 'Available') {
           color = '#52c41a';
         } else if (status === 'Full') {
@@ -122,14 +134,12 @@ function WarehouseManagement() {
         } else if (status === 'Empty') {
           color = '#1677ff';
         }
-        //#52c41a
-        // Render สถานะพร้อมสี
         return (
           <span
             style={{
               color: color,
               fontWeight: 550,
-              textTransform: 'capitalize', // ทำให้ตัวอักษรขึ้นต้นด้วยตัวใหญ่
+              textTransform: 'capitalize',
             }}
           >
             {status}
@@ -139,8 +149,7 @@ function WarehouseManagement() {
     },    
     {
       title: 'Address',
-      //dataIndex: 'address',  // ใช้ `Address` เป็น `dataIndex`
-      key: 'address',        // ใช้ `address` เป็น `key`
+      key: 'address',
       render: (record) => (
         <div style={{ maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis' }}>
           {record.address}, {record.zipcode}, {record?.province?.province}
@@ -151,23 +160,22 @@ function WarehouseManagement() {
       title: 'Action',
       key: 'action',
       width: 140,
-      render: (_, record) => (
+      render: (record) => (
         <Space size="middle">
           <Button type="link"><EditTwoTone twoToneColor="#10515F" /></Button>
-          <Button
-            type="link"
-            //onClick={() => handleDeleteWarehouse(record.WarehouseID)}
-          >
+          <Button onClick={() => deleteUserById(record.ID)}>
             <DeleteTwoTone twoToneColor="#FF7236" />
           </Button>
         </Space>
       ),
     },
-  ];const getWarehouses = async () => {
+  ];
+
+  const getWarehouses = async () => {
     let res = await GetWarehouses();
   
     if (res.status === 200) {
-      console.log('Warehouses data:', res.data); // ตรวจสอบข้อมูลที่ได้รับจาก API
+      console.log('Warehouses data:', res.data);
       setWarehouses(res.data);
     } else {
       setWarehouses([]);
@@ -182,20 +190,25 @@ function WarehouseManagement() {
     getWarehouses();
   }, []);
   
-  const handleDeleteWarehouse = async (warehouseId: string) => {
-    const res = await DeleteWarehousesById(warehouseId);
-    if (res.status === 200) {
-      getWarehouses(); // Refetch warehouses after deletion
+  const deleteUserById = async (id: string) => {
+    let res = await DeleteWarehousesById(id);
+    if (res.status == 200) {
+      messageApi.open({
+        type: "success",
+        content: res.data.message,
+      });
+      await getWarehouses();
     } else {
       messageApi.open({
         type: "error",
-        content: "Failed to delete warehouse",
+        content: res.data.error,
       });
     }
   };
-
+  
   return (
     <Layout style={{ minHeight: '100vh', backgroundColor: '#FFFFFF' }}>
+      {contextHolder}
       <Header style={{
         position: 'relative',
         background: `url(${w1}) no-repeat center center`,
@@ -265,56 +278,55 @@ function WarehouseManagement() {
           }}
         >
           <Input.Search
-          placeholder="Search warehouses..."
-          allowClear
-          enterButton={
-            <Button 
-              type="primary" 
-              icon={<SearchOutlined />}
-              style={{ borderRadius: 0 ,backgroundColor: '#FF7236',}} // ปรับปุ่มให้เป็นเหลี่ยม
-            >
-              Search
-            </Button>
-          }
-          size="large"
-          style={{
-            width: '800px',
-            borderRadius: 0, // ทำให้ input เป็นเหลี่ยม
-          }}
-          onSearch={handleSearch}
-          onChange={(e) => handleSearch(e.target.value)}
-        />
+            placeholder="Search warehouses..."
+            allowClear
+            enterButton={
+              <Button 
+                type="primary" 
+                icon={<SearchOutlined />}
+                style={{ borderRadius: 0, backgroundColor: '#FF7236' }}
+              >
+                Search
+              </Button>
+            }
+            size="large"
+            style={{
+              width: '800px',
+              borderRadius: 0,
+            }}
+            onSearch={handleSearch}
+            onChange={(e) => handleSearch(e.target.value)}
+          />
         </Space>
       </Header>
 
       <Content style={{ padding: '24px 50px' }}>
-      <Button
-        type="primary"
-        icon={<PlusOutlined />}
-        size="large"
-        style={{ 
-          marginBottom: '24px',
-          background: '#10515F',
-          marginLeft: '90px', // ขยับปุ่มไปทางขวา
-          borderRadius: '0px', // กำหนดให้ปุ่มเป็นเหลี่ยม
-          width: '250px', // กำหนดความกว้างของปุ่ม
-          height: '50px'
-        }}
-        //onClick={handleAddWarehouse}
-      >
-        New Warehouse
-      </Button>
-      <Card >
-        <Table
-          columns={columns}
-          dataSource={warehouses}
-          pagination={{ pageSize: 10 }}
-          rowKey="WarehouseID"
-        />
-      </Card>
+        <Button
+          type="primary"
+          icon={<PlusOutlined />}
+          size="large"
+          style={{ 
+            marginBottom: '24px',
+            background: '#10515F',
+            marginLeft: '90px',
+            borderRadius: '0px',
+            width: '250px',
+            height: '50px'
+          }}
+        >
+          New Warehouse
+        </Button>
+        <Card>
+          <Table
+            columns={columns}
+            dataSource={filteredWarehouses}
+            pagination={{ pageSize: 10 }}
+            rowKey="ID"
+          />
+        </Card>
       </Content>
     </Layout>
   );
-};
+}
 
 export default WarehouseManagement;

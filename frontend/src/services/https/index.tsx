@@ -3,6 +3,7 @@ import axios from "axios";
 const apiUrl = "http://localhost:8000";
 const Authorization = localStorage.getItem("token");
 const Bearer = localStorage.getItem("token_type");
+
 const requestOptions = {
   headers: {
     "Content-Type": "application/json",
@@ -12,55 +13,60 @@ const requestOptions = {
 
 async function GetProvince() {
   return await axios
-    .get(`${apiUrl}/provinces`)
+    .get(`${apiUrl}/provinces`,requestOptions)
     .then((res) => res)
     .catch((e) => e.response);
 }
 
 async function GetWarehouseTypes() {
   return await axios
-    .get(`${apiUrl}/warehouseTypes`)
+    .get(`${apiUrl}/warehouseTypes`,requestOptions)
     .then((res) => res)
     .catch((e) => e.response);
 }
 
 async function GetWarehouseStatuses() {
   return await axios
-    .get(`${apiUrl}/warehouseStatuses`)
+    .get(`${apiUrl}/warehouseStatuses`,requestOptions)
     .then((res) => res)
     .catch((e) => e.response);
 }
 
 async function GetWarehouses() {
   return await axios
-    .get(`${apiUrl}/warehouses`)
+    .get(`${apiUrl}/warehouses`,requestOptions)
     .then((res) => res)
     .catch((e) => e.response);
 }
-async function GetWarehousesById(warehouse_id: string) {
+
+async function GetWarehousesById(id: string) {
   return await axios
-    .get(`${apiUrl}/warehouse/${warehouse_id}`)
+    .get(`${apiUrl}/warehouse/${id}`,requestOptions)
     .then((res) => res)
     .catch((e) => e.response);
 }
-async function UpdateWarehousesById(warehouse_id: string, data: WarehousesInterface) {
+
+async function UpdateWarehousesById(id: string, data: WarehousesInterface) {
   return await axios
-    .put(`${apiUrl}/warehouse/${warehouse_id}`, data)
+    .put(`${apiUrl}/warehouse/${id}`, data ,requestOptions)
     .then((res) => res)
     .catch((e) => e.response);
 }
-async function DeleteWarehousesById(warehouse_id: string) {
+
+async function DeleteWarehousesById(id: string) {
   return await axios
-    .delete(`${apiUrl}/warehouse/${warehouse_id}`)
+    .delete(`${apiUrl}/warehouse/${id}` ,requestOptions)
     .then((res) => res)
     .catch((e) => e.response);
 }
+
 async function CreateWarehouse(data: WarehousesInterface) {
   return await axios
-    .post(`${apiUrl}/warehouses`, data)
+    .post(`${apiUrl}/warehouses`, data, requestOptions)
     .then((res) => res)
     .catch((e) => e.response);
 }
+
 export {
   GetProvince,
   GetWarehouseTypes,
