@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { Layout, Typography, Input, Button, Table, Space, Image, Modal, Form, Select, Tag, Card, message, InputNumber } from 'antd';
-import { PlusOutlined, SearchOutlined, UserOutlined, DeleteTwoTone, DeleteFilled, EditTwoTone } from '@ant-design/icons';
+import { PlusOutlined, SearchOutlined, UserOutlined, DeleteTwoTone, DeleteFilled, EditTwoTone, SaveOutlined, PauseOutlined, HomeOutlined} from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import logo from "../../assets/logo.png";
 import w1 from "../../assets/w1.png";
@@ -465,119 +465,125 @@ const onFinish = async (values: WarehousesInterface) => {
         visible={isModalVisible}
         onOk={handleModalOk}
         onCancel={handleModalCancel}
-        okText="Save"
+        okText={
+          <span>
+            <SaveOutlined style={{ marginRight: 10 }} />
+            Save
+          </span>
+        }
         cancelText="Cancel"
         okButtonProps={{
-          style: { backgroundColor: '#FF7236', color: 'white', borderColor: '#FF7236' }, // สีปุ่ม OK
+          style: { backgroundColor: '#FF7236', color: 'white', borderColor: '#FF7236' },
         }}
         cancelButtonProps={{
-          style: { backgroundColor: '#FFFFFF', color: 'black', borderColor: '#FF7236' }, // สีปุ่ม Cancel
+          style: { backgroundColor: '#FFFFFF', color: 'black', borderColor: '#FF7236' },
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', marginBottom: '0rem' }}>
-        <img 
-          alt="Logo"
-          src={logo}
-          style={{
-            width: '150px',
-            height: 'auto',
-            marginLeft: '-10px',
-          }}
-        />
-        <h2>Add New Warehouse</h2>
-      </div>
+      <Card
+        style={{
+          backgroundColor: '#FFFFFF',  // กำหนดสีพื้นหลังที่นี่
+          borderRadius: '8px',  // เพิ่มขอบมุมโค้ง (ถ้าต้องการ)
+          padding: '0px',  // เพิ่ม padding เพื่อให้เนื้อหาดูไม่ติดขอบ
+          border: '2px solid #f0f0f0',  // กำหนดสีขอบของ card
+        }}
+      >
+    <div style={{ display: 'flex', alignItems: 'center', marginBottom: '0rem' }}>
+    <h2 style={{ marginBottom: '10px', display: 'flex', alignItems: 'center' }}>
+      <HomeOutlined style={{ marginRight: '10px', color: '#FF7236' }} /> {/* ไอคอนที่เพิ่มมา */}
+      Add New Warehouse
+    </h2>
+    </div >
       <Form form={form} layout="vertical">
+        {/* Row 1: WarehouseName */}
         <Form.Item
-            name="WarehouseName"
-            label="Warehouse Name"
-            rules={[{ required: true, message: 'Please input the warehouse name!' }]}
-          >
-            <Input />
-          </Form.Item>
+          name="WarehouseName"
+          label="Warehouse Name"
+          rules={[{ required: true, message: 'Please input the warehouse name!' }]}
+        >
+          <Input />
+        </Form.Item>
+
+        {/* Row 2: WarehouseTypeID, WarehouseStatusID */}
+        <div style={{ display: 'flex', gap: '1rem' }}>
           <Form.Item
             name="WarehouseTypeID"
             label="Type"
+            style={{ flex: 1 }}
             rules={[{ required: true, message: 'Please select warehouse type!' }]}
           >
-            <Select defaultValue="" style={{ width: "100%" }}>
-                  {warehouseType?.map((item) => (
-                    <Select.Option
-                      value={item?.ID}
-                    >
-                      {item?.WarehouseType}
-                    </Select.Option>
-                  ))}
-              </Select>
-          </Form.Item>
-          <Form.Item
-            name="capacity"
-            label="Capacity"
-            rules={[{ required: true, message: 'Please input the warehouse capacity!' }]}
-          >
-            <InputNumber
-                  min={0}
-                  //max={99}
-                  defaultValue={0}
-                  style={{ width: "100%" }}
-                />
+            <Select placeholder="Select Type" style={{ width: '100%' }}>
+              {warehouseType?.map((item) => (
+                <Select.Option value={item?.ID} key={item?.ID}>
+                  {item?.WarehouseType}
+                </Select.Option>
+              ))}
+            </Select>
           </Form.Item>
           <Form.Item
             name="WarehouseStatusID"
             label="Status"
+            style={{ flex: 1 }}
             rules={[{ required: true, message: 'Please select warehouse status!' }]}
           >
-            <Select defaultValue="" style={{ width: "100%" }}>
-                  {warehouseStatus?.map((item) => (
-                    <Select.Option
-                      value={item?.ID}
-                    >
-                      {item?.WarehouseStatus}
-                    </Select.Option>
-                  ))}
-                </Select>
+            <Select placeholder="Select Status" style={{ width: '100%' }}>
+              {warehouseStatus?.map((item) => (
+                <Select.Option value={item?.ID} key={item?.ID}>
+                  {item?.WarehouseStatus}
+                </Select.Option>
+              ))}
+            </Select>
           </Form.Item>
-          <Form.Item
-            name="address"
-            label="Address"
-            rules={[{ required: true, message: 'Please input the warehouse address!' }]}
-          >
-            <Input />
-          </Form.Item>
+        </div>
+
+        {/* Row 3: Capacity */}
+        <Form.Item
+          name="capacity"
+          label="Capacity"
+          rules={[{ required: true, message: 'Please input the warehouse capacity!' }]}
+        >
+          <InputNumber min={0} defaultValue={0} style={{ width: '100%' }} />
+        </Form.Item>
+
+        {/* Row 4: Address */}
+        <Form.Item
+          name="address"
+          label="Address"
+          rules={[{ required: true, message: 'Please input the warehouse address!' }]}
+        >
+          <Input style={{ width: '100%' }} />
+        </Form.Item>
+        
+        {/* Row 5: Province, Zipcode */}
+        <div style={{ display: 'flex', gap: '1rem' }}>
           <Form.Item
             name="ProvinceID"
             label="Province"
+            style={{ flex: 1 }}
             rules={[{ required: true, message: 'Please select the province!' }]}
           >
-            <Select defaultValue="" style={{ width: "100%" }}>
-                  {province?.map((item) => (
-                    <Select.Option
-                      value={item?.ID}
-                    >
-                      {item?.Province}
-                    </Select.Option>
-                  ))}
-                </Select>
+            <Select placeholder="Select Province" style={{ width: '100%' }}>
+              {province?.map((item) => (
+                <Select.Option value={item?.ID} key={item?.ID}>
+                  {item?.Province}
+                </Select.Option>
+              ))}
+            </Select>
           </Form.Item>
           <Form.Item
             name="zipcode"
             label="Zipcode"
+            style={{ flex: 1 }}
             rules={[
-              { 
-                required: true, 
-                message: 'Please input the zipcode!' 
-              },
-              { 
-                pattern: /^\d{5}$/, 
-                message: 'Zipcode must be 5 digits!' 
-              }
+              { required: true, message: 'Please input the zipcode!' },
+              { pattern: /^\d{5}$/, message: 'Zipcode must be 5 digits!' },
             ]}
           >
-            <Input 
-              type="text" // ใช้ type="text" แทน type="number" เพื่อให้สามารถใช้ pattern ได้
-            />
+            <Input placeholder="Enter 5-digit zipcode" type="text" />
           </Form.Item>
-        </Form>
-      </Modal>
+        </div>
+      </Form>
+      </Card>
+    </Modal>
     </Layout>
   );
 }

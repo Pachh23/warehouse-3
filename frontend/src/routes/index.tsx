@@ -4,7 +4,7 @@ import Loadable from "../components/third-patry/Loadable";
 //import WarehouseManagement from "../pages/warehouse/index";  // นำเข้า Warehouse component
 import InventoryCount from "../pages/InventoryCount/index";  // นำเข้า InventoryCount component
 const WarehouseManagement = Loadable(lazy(() => import("../pages/warehouse")));
-const WarehouseCreate = Loadable(lazy(() => import("../pages/warehouse/create")));
+const WarehouseCreate = Loadable(lazy(() => import("../pages/warehouse/index")));
 
 const ConfigRoutes: React.FC = () => {
   return (
