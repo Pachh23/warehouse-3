@@ -6,7 +6,7 @@ import (
 
 type Warehouses struct {
 	gorm.Model
-	WarehouseName     string `json:"warehouse_name" gorm:"unique"`
+	WarehouseName     string `gorm:"unique;not null"`
 	WarehouseTypeID   uint
 	Capacity          float64 `json:"capacity"` // หน่วย: m³ (ลูกบาศก์เมตร)
 	WarehouseStatusID uint

@@ -4,7 +4,7 @@ import { PlusOutlined, SearchOutlined, UserOutlined, DeleteTwoTone, DeleteFilled
 import type { ColumnsType } from 'antd/es/table';
 import logo from "../../assets/logo.png";
 import w1 from "../../assets/w1.png";
-import { GetWarehouseTypes,GetWarehouseStatuses,GetProvince,CreateWarehouse } from '../../services/https';
+import { GetWarehouseTypes,GetWarehouseStatuses,GetProvince,CreateWarehouse,UpdateWarehousesById,GetWarehousesById } from '../../services/https';
 import { WarehouseStatusesInterface } from "../../interfaces/WarehouseStatuses";
 import { ProvinceInterface } from "../../interfaces/Province";
 import { WarehousesInterface } from "../../interfaces/Warehouses";
@@ -53,7 +53,7 @@ const onGetWarehouseStatus = async () => {
       content: "ไม่พบข้อมูลสถานะ",
     });
     setTimeout(() => {
-      navigate("/warehouse");
+      navigate("/");
     }, 2000);
   }
 };
@@ -69,7 +69,7 @@ if (res.status == 200) {
     content: "ไม่พบข้อมูลสถานะ",
   });
   setTimeout(() => {
-    navigate("/warehouse");
+    navigate("/");
   }, 2000);
 }
 };
@@ -85,7 +85,7 @@ if (res.status == 200) {
     content: "ไม่พบข้อมูลสถานะ",
   });
   setTimeout(() => {
-    navigate("/warehouse");
+    navigate("/");
   }, 2000);
 }
 };
@@ -135,8 +135,8 @@ useEffect(() => {
     },      
     {
       title: 'Warehouse Name',
-      dataIndex: 'warehouse_name',  // แก้ไขจาก WarehouseName
-      key: 'warehouse_name',
+      dataIndex: 'WarehouseName',  // แก้ไขจาก WarehouseName
+      key: 'WarehouseName',
       // ...
       sorter: (a, b) => {
         if (!a.WarehouseName || !b.WarehouseName) {  // แก้ไขการอ้างอิง
@@ -270,33 +270,75 @@ useEffect(() => {
     setIsModalVisible(true);
   };
 
-  const handleModalOk = () => {
-    form
-      .validateFields()
-      .then((values) => {
-        const { province, zipcode } = values;
-        const address = `${values.address}, ${province}, ${zipcode}`;
-        
-        setWarehouses([
-          ...warehouses,
-          {
-            key: Date.now().toString(),
-            id: `W-${warehouses.length + 1}`,
-            ...values,
-            address,
-          },
-        ]);
-        form.resetFields();
-        setIsModalVisible(false);
-      })
-      .catch((info) => {
-        console.log('Validate Failed:', info);
-      });
+  const handleModalOk = async () => {
+    try {
+      // Validate and collect the form values
+      const values: WarehousesInterface = await form.validateFields();
+      let res = await CreateWarehouse(values);
+  
+      if (res.status === 201) {
+        message.success(res.data.message);
+        setTimeout(() => {
+          navigate("/");
+        }, 2000);
+      } else {
+        message.error(res.data.error);
+      }
+    } catch (errorInfo) {
+      // Handle validation errors
+      console.error("Validation failed:", errorInfo);
+    }
   };
 
   const handleModalCancel = () => {
+    // Close the modal and reset the form
     setIsModalVisible(false);
+    form.resetFields();
   };
+
+///-------------------ส่วนแก้ไข--------------//
+/*
+const getWarehousesById = async (id: string) => {
+  let res = await GetWarehousesById(id);
+  if (res.status == 200) {
+    form.setFieldsValue({
+      first_name: res.data.first_name,
+      last_name: res.data.last_name,
+      email: res.data.email,
+      age: res.data.age,
+      gender_id: res.data.gender?.ID,
+    });
+  } else {
+    messageApi.open({
+      type: "error",
+      content: "ไม่พบข้อมูลผู้ใช้",
+    });
+    setTimeout(() => {
+      navigate("/warehouse");
+    }, 2000);
+  }
+};
+/*
+const onFinish = async (values: WarehousesInterface) => {
+  let payload = {
+    ...values,
+  };
+  const res = await UpdateWarehousesById payload);
+  if (res.status == 200) {
+    messageApi.open({
+      type: "success",
+      content: res.data.message,
+    });
+    setTimeout(() => {
+      navigate("/");
+    }, 2000);
+  } else {
+    messageApi.open({
+      type: "error",
+      content: res.data.error,
+    });
+  }
+};*/
 
   return (
     <Layout style={{ minHeight: '100vh', backgroundColor: '#FFFFFF' }}>
@@ -446,14 +488,14 @@ useEffect(() => {
       </div>
       <Form form={form} layout="vertical">
         <Form.Item
-            name="name"
+            name="WarehouseName"
             label="Warehouse Name"
             rules={[{ required: true, message: 'Please input the warehouse name!' }]}
           >
             <Input />
           </Form.Item>
           <Form.Item
-            name="type"
+            name="WarehouseTypeID"
             label="Type"
             rules={[{ required: true, message: 'Please select warehouse type!' }]}
           >

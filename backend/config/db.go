@@ -29,6 +29,8 @@ func SetupDatabase() {
 		&entity.WarehouseTypes{},
 		&entity.WarehouseStatuses{},
 		&entity.Warehouses{},
+		&entity.Products{},
+		&entity.InventoryCounts{},
 	)
 
 	//----------------WarehouseType-------------//

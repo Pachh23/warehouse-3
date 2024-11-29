@@ -2,6 +2,7 @@ package warehouses
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"warehouse.com/warehouse/config"
@@ -84,10 +85,20 @@ func Create(c *gin.Context) {
 	// Save the warehouse to the database
 	db := config.DB()
 	if result := db.Create(&warehouse); result.Error != nil {
+		// Check if the error is due to UNIQUE constraint
+		if strings.Contains(result.Error.Error(), "UNIQUE constraint failed") {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Warehouse name already exists"})
+			return
+		}
+
+		// Handle other potential database errors
 		c.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
 		return
 	}
 
 	// Return success response with the created warehouse object
-	c.JSON(http.StatusOK, gin.H{"message": "Warehouse created successfully", "data": warehouse})
+	c.JSON(http.StatusCreated, gin.H{
+		"message": "Warehouse created successfully",
+		"data":    warehouse,
+	})
 }

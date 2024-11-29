@@ -62,7 +62,7 @@ async function DeleteWarehousesById(id: string) {
 
 async function CreateWarehouse(data: WarehousesInterface) {
   return await axios
-    .post(`${apiUrl}/warehouses`, data, requestOptions)
+    .post(`${apiUrl}/warehouses-create`, data, requestOptions)
     .then((res) => res)
     .catch((e) => e.response);
 }
