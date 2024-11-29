@@ -162,7 +162,7 @@ useEffect(() => {
         }
     
         return (
-          <Tag bordered={true} color={color}>
+          <Tag bordered={false} color={color}>
             {type}
           </Tag>
         );
@@ -213,7 +213,7 @@ useEffect(() => {
       key: 'address',
       render: (record) => (
         <div style={{ maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-          {record.address}, {record.zipcode}, {record?.province?.province}
+          {record.address}, {record?.Province?.Province}, {record.zipcode}
         </div>
       ),
     },
