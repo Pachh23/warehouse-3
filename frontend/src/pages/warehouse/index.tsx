@@ -10,7 +10,7 @@ import { ProvinceInterface } from "../../interfaces/Province";
 import { WarehousesInterface } from "../../interfaces/Warehouses";
 import { WarehouseTypesInterface } from "../../interfaces/WarehouseTypes";
 import { GetWarehouses, DeleteWarehousesById } from "../../services/https";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 
 const { Header, Content } = Layout;
 const { Title, Paragraph } = Typography;
@@ -40,6 +40,7 @@ function WarehouseManagement() {
   const [warehouseType, setWarehouseType] = useState<WarehouseTypesInterface[]>([]);
   const [province, setGetProvince] = useState<ProvinceInterface[]>([]);
   const [form] = Form.useForm();
+  const { id } = useParams<{ id: any }>();
 
 
 //---------onGetWarehouseStatus--------//
@@ -223,15 +224,61 @@ useEffect(() => {
       width: 140,
       render: (record) => (
         <Space size="middle">
-          <Button type="link"><EditTwoTone twoToneColor="#10515F" /></Button>
-          <Button onClick={() => deleteUserById(record.ID)}>
+          <Button onClick={() => (record.ID)}>
+            <EditTwoTone twoToneColor="#10515F" /></Button>
+          <Button onClick={() => deleteWarehouseById(record.ID)}>
             <DeleteTwoTone twoToneColor="#FF7236" />
           </Button>
         </Space>
       ),
     },
   ];
+  
+  const getWarehouseById = async (id: string) => {
+    let res = await GetWarehousesById(id);
+    if (res.status == 200) {
+      form.setFieldsValue({
+        WarehouseName: res.data.WarehouseName,
+        WarehouseTypeID: res.data.WarehouseType?.ID,
+        WarehouseStatusID: res.data.WarehouseStatus?.ID,
+        Capacity: res.data.Capacity,
+        Address: res.data.Address,
+        Zipcode: res.data.Zipcode,
+        ProvinceID: res.data.ProvinceID?.ID,
+      });
+    } else {
+      messageApi.open({
+        type: "error",
+        content: "ไม่พบข้อมูลผู้ใช้",
+      });
+      setTimeout(() => {
+        navigate("/");
+      }, 2000);
+    }
+  };
 
+  const onFinish = async (values: WarehousesInterface) => {
+    try {
+      const res = await UpdateWarehousesById(id, values);
+      if (res.status === 200) {
+        messageApi.open({
+          type: 'success',
+          content: res.data.message,
+        });
+        setTimeout(() => {
+          navigate('/');
+        }, 2000);
+      } else {
+        throw new Error(res.data.error);
+      }
+    } catch (error: any) {
+      messageApi.open({
+        type: 'error',
+        content: error.message || 'Update failed!',
+      });
+    }
+  };
+  
   const getWarehouses = async () => {
     let res = await GetWarehouses();
     if (res.status === 200) {
@@ -247,10 +294,10 @@ useEffect(() => {
   };
   
   useEffect(() => {
-    getWarehouses();
+    getWarehouses(),getWarehouseById(id);
   }, []);
   
-  const deleteUserById = async (id: string) => {
+  const deleteWarehouseById = async (id: string) => {
     let res = await DeleteWarehousesById(id);
     if (res.status == 200) {
       messageApi.open({
@@ -297,48 +344,7 @@ useEffect(() => {
   };
 
 ///-------------------ส่วนแก้ไข--------------//
-/*
-const getWarehousesById = async (id: string) => {
-  let res = await GetWarehousesById(id);
-  if (res.status == 200) {
-    form.setFieldsValue({
-      first_name: res.data.first_name,
-      last_name: res.data.last_name,
-      email: res.data.email,
-      age: res.data.age,
-      gender_id: res.data.gender?.ID,
-    });
-  } else {
-    messageApi.open({
-      type: "error",
-      content: "ไม่พบข้อมูลผู้ใช้",
-    });
-    setTimeout(() => {
-      navigate("/warehouse");
-    }, 2000);
-  }
-};
-/*
-const onFinish = async (values: WarehousesInterface) => {
-  let payload = {
-    ...values,
-  };
-  const res = await UpdateWarehousesById payload);
-  if (res.status == 200) {
-    messageApi.open({
-      type: "success",
-      content: res.data.message,
-    });
-    setTimeout(() => {
-      navigate("/");
-    }, 2000);
-  } else {
-    messageApi.open({
-      type: "error",
-      content: res.data.error,
-    });
-  }
-};*/
+
 
   return (
     <Layout style={{ minHeight: '100vh', backgroundColor: '#FFFFFF' }}>
@@ -493,7 +499,16 @@ const onFinish = async (values: WarehousesInterface) => {
       Add New Warehouse
     </h2>
     </div >
-      <Form form={form} layout="vertical">
+      <Form form={form} layout="vertical" onFinish={onFinish} autoComplete="off"
+       initialValues={{
+        WarehouseName: '',
+        WarehouseTypeID: undefined,
+        WarehouseStatusID: undefined,
+        Capacity: undefined,
+        Address: '',
+        Zipcode: '',
+        ProvinceID: undefined,
+      }}>
         {/* Row 1: WarehouseName */}
         <Form.Item
           name="WarehouseName"
