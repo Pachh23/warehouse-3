@@ -1,21 +1,35 @@
-import { useState, useEffect, useMemo } from "react";
-import { Layout, Typography, Input, Button, Table, Space, Image, Modal, Form, Select, Tag, Card, message, InputNumber } from 'antd';
-import { PlusOutlined, SearchOutlined, UserOutlined, DeleteTwoTone, DeleteFilled, EditTwoTone, SaveOutlined, PauseOutlined, HomeOutlined} from '@ant-design/icons';
+import React, { useState, useEffect, useMemo } from "react";
+import { 
+  Layout, Typography, Input, Button, Table, Space, 
+  Image, Modal, Form, Select, Tag, Card, message, InputNumber 
+} from 'antd';
+import { 
+  PlusOutlined, SearchOutlined, UserOutlined, 
+  DeleteTwoTone, EditTwoTone, SaveOutlined, HomeOutlined
+} from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
+import { useNavigate } from "react-router-dom";
+
+// Import assets and services
 import logo from "../../assets/logo.png";
 import w1 from "../../assets/w1.png";
-import { GetWarehouseTypes,GetWarehouseStatuses,GetProvince,CreateWarehouse,UpdateWarehousesById,GetWarehousesById } from '../../services/https';
+import { 
+  GetWarehouseTypes, GetWarehouseStatuses, GetProvince, 
+  CreateWarehouse, GetWarehouses, DeleteWarehousesById 
+} from '../../services/https';
+
+// Import interfaces
 import { WarehouseStatusesInterface } from "../../interfaces/WarehouseStatuses";
 import { ProvinceInterface } from "../../interfaces/Province";
 import { WarehousesInterface } from "../../interfaces/Warehouses";
 import { WarehouseTypesInterface } from "../../interfaces/WarehouseTypes";
-import { GetWarehouses, DeleteWarehousesById } from "../../services/https";
-import { Link, useNavigate, useParams } from "react-router-dom";
 
+// Destructure Layout and Typography components
 const { Header, Content } = Layout;
 const { Title, Paragraph } = Typography;
 
-const WarehouseLogo = () => (
+// Component for Warehouse Logo
+const WarehouseLogo: React.FC = () => (
   <Image
     alt="Logo"
     src={logo}
@@ -29,82 +43,75 @@ const WarehouseLogo = () => (
   />
 );
 
-function WarehouseManagement() { 
+// Main Warehouse Management Component
+const WarehouseManagement: React.FC = () => { 
   const navigate = useNavigate();
-  const [warehouses, setWarehouses] = useState<WarehousesInterface[]>([]);
   const [messageApi, contextHolder] = message.useMessage();
-  const myId = localStorage.getItem("id");
+  const [form] = Form.useForm();
+
+  // State Management
+  const [warehouses, setWarehouses] = useState<WarehousesInterface[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [warehouseStatus, setWarehouseStatus] = useState<WarehouseStatusesInterface[]>([]);
   const [warehouseType, setWarehouseType] = useState<WarehouseTypesInterface[]>([]);
   const [province, setGetProvince] = useState<ProvinceInterface[]>([]);
-  const [form] = Form.useForm();
-  const { id } = useParams<{ id: any }>();
 
+  // Fetch Initial Data
+  const fetchInitialData = async () => {
+    try {
+      const [statusRes, typeRes, provinceRes] = await Promise.all([
+        GetWarehouseStatuses(),
+        GetWarehouseTypes(),
+        GetProvince()
+      ]);
 
-//---------onGetWarehouseStatus--------//
-const onGetWarehouseStatus = async () => {
-  let res = await GetWarehouseStatuses();
-  if (res.status == 200) {
-    setWarehouseStatus(res.data);
-  } else {
-    messageApi.open({
-      type: "error",
-      content: "ไม่พบข้อมูลสถานะ",
-    });
-    setTimeout(() => {
-      navigate("/");
-    }, 2000);
-  }
-};
+      if (statusRes.status === 200) setWarehouseStatus(statusRes.data);
+      if (typeRes.status === 200) setWarehouseType(typeRes.data);
+      if (provinceRes.status === 200) setGetProvince(provinceRes.data);
+    } catch (error) {
+      messageApi.open({
+        type: "error",
+        content: "Error fetching initial data",
+      });
+      setTimeout(() => navigate("/"), 2000);
+    }
+  };
 
-//---------GetWarehouseTypes--------//
-const onGetWarehouseType = async () => {
-let res = await GetWarehouseTypes();
-if (res.status == 200) {
-  setWarehouseType(res.data);
-} else {
-  messageApi.open({
-    type: "error",
-    content: "ไม่พบข้อมูลสถานะ",
-  });
-  setTimeout(() => {
-    navigate("/");
-  }, 2000);
-}
-};
+  // Fetch Warehouses
+  const getWarehouses = async () => {
+    try {
+      const res = await GetWarehouses();
+      if (res.status === 200) {
+        setWarehouses(res.data);
+      } else {
+        setWarehouses([]);
+        messageApi.open({
+          type: 'error',
+          content: res.data.error,
+        });
+      }
+    } catch (error) {
+      messageApi.open({
+        type: 'error',
+        content: 'Failed to fetch warehouses',
+      });
+    }
+  };
 
-//---------onGetProvince--------//
-const onGetProvince = async () => {
-let res = await GetProvince();
-if (res.status == 200) {
-  setGetProvince(res.data);
-} else {
-  messageApi.open({
-    type: "error",
-    content: "ไม่พบข้อมูลสถานะ",
-  });
-  setTimeout(() => {
-    navigate("/");
-  }, 2000);
-}
-};
+  // Initial Data Fetching
+  useEffect(() => {
+    fetchInitialData();
+    getWarehouses();
+  }, []);
 
-useEffect(() => {
-  onGetWarehouseStatus(),onGetWarehouseType(),onGetProvince();
-  return () => {};
-}, []);
-  // ใช้ useMemo เพื่อ optimize performance ในการ filter ข้อมูล
+  // Filtered Warehouses
   const filteredWarehouses = useMemo(() => {
     const lowercaseQuery = searchQuery.toLowerCase().trim();
   
-    if (!lowercaseQuery) {
-      return warehouses;
-    }
+    if (!lowercaseQuery) return warehouses;
   
     return warehouses.filter((warehouse) => {
-      // เพิ่มเงื่อนไขในการค้นหาให้ครอบคลุมทุกฟิลด์ที่ต้องการ
       const searchableFields = [
         warehouse.WarehouseName?.toLowerCase() || '',
         warehouse.Address?.toLowerCase() || '',
@@ -113,10 +120,58 @@ useEffect(() => {
         warehouse.Capacity?.toString() || ''
       ];
       
-      // ค้นหาจากทุกฟิลด์ที่กำหนด
       return searchableFields.some(field => field.includes(lowercaseQuery));
     });
   }, [warehouses, searchQuery]);
+
+  // Modal Handlers
+  const handleAddWarehouse = () => setIsModalVisible(true);
+  const handleModalCancel = () => {
+    setIsModalVisible(false);
+    form.resetFields();
+  };
+
+  // Create Warehouse
+  const handleModalOk = async () => {
+    try {
+      const values: WarehousesInterface = await form.validateFields();
+      const res = await CreateWarehouse(values);
+
+      if (res.status === 201) {
+        message.success(res.data.message);
+        setIsModalVisible(false);
+        getWarehouses();
+      } else {
+        message.error(res.data.error);
+      }
+    } catch (errorInfo) {
+      console.error("Validation failed:", errorInfo);
+    }
+  };
+
+  // Delete Warehouse
+  const deleteWarehouseById = async (id: string) => {
+    try {
+      const res = await DeleteWarehousesById(id);
+      if (res.status === 200) {
+        messageApi.open({
+          type: "success",
+          content: res.data.message,
+        });
+        await getWarehouses();
+      } else {
+        messageApi.open({
+          type: "error",
+          content: res.data.error,
+        });
+      }
+    } catch (error) {
+      messageApi.open({
+        type: "error",
+        content: "Failed to delete warehouse",
+      });
+    }
+  };
 
   const handleSearch = (value: string) => {
     setSearchQuery(value);
@@ -224,8 +279,7 @@ useEffect(() => {
       width: 140,
       render: (record) => (
         <Space size="middle">
-          <Button onClick={() => (record.ID)}>
-            <EditTwoTone twoToneColor="#10515F" /></Button>
+          <Button onClick={() => deleteWarehouseById(record.ID)}><EditTwoTone twoToneColor="#10515F" /></Button>
           <Button onClick={() => deleteWarehouseById(record.ID)}>
             <DeleteTwoTone twoToneColor="#FF7236" />
           </Button>
@@ -233,117 +287,6 @@ useEffect(() => {
       ),
     },
   ];
-  
-  const getWarehouseById = async (id: string) => {
-    let res = await GetWarehousesById(id);
-    if (res.status == 200) {
-      form.setFieldsValue({
-        WarehouseName: res.data.WarehouseName,
-        WarehouseTypeID: res.data.WarehouseType?.ID,
-        WarehouseStatusID: res.data.WarehouseStatus?.ID,
-        Capacity: res.data.Capacity,
-        Address: res.data.Address,
-        Zipcode: res.data.Zipcode,
-        ProvinceID: res.data.ProvinceID?.ID,
-      });
-    } else {
-      messageApi.open({
-        type: "error",
-        content: "ไม่พบข้อมูลผู้ใช้",
-      });
-      setTimeout(() => {
-        navigate("/");
-      }, 2000);
-    }
-  };
-
-  const onFinish = async (values: WarehousesInterface) => {
-    try {
-      const res = await UpdateWarehousesById(id, values);
-      if (res.status === 200) {
-        messageApi.open({
-          type: 'success',
-          content: res.data.message,
-        });
-        setTimeout(() => {
-          navigate('/');
-        }, 2000);
-      } else {
-        throw new Error(res.data.error);
-      }
-    } catch (error: any) {
-      messageApi.open({
-        type: 'error',
-        content: error.message || 'Update failed!',
-      });
-    }
-  };
-  
-  const getWarehouses = async () => {
-    let res = await GetWarehouses();
-    if (res.status === 200) {
-      console.log('Warehouses data:', res.data);
-      setWarehouses(res.data);
-    } else {
-      setWarehouses([]);
-      messageApi.open({
-        type: 'error',
-        content: res.data.error,
-      });
-    }
-  };
-  
-  useEffect(() => {
-    getWarehouses(),getWarehouseById(id);
-  }, []);
-  
-  const deleteWarehouseById = async (id: string) => {
-    let res = await DeleteWarehousesById(id);
-    if (res.status == 200) {
-      messageApi.open({
-        type: "success",
-        content: res.data.message,
-      });
-      await getWarehouses();
-    } else {
-      messageApi.open({
-        type: "error",
-        content: res.data.error,
-      });
-    }
-  };
-  
-  const handleAddWarehouse = () => {
-    setIsModalVisible(true);
-  };
-
-  const handleModalOk = async () => {
-    try {
-      // Validate and collect the form values
-      const values: WarehousesInterface = await form.validateFields();
-      let res = await CreateWarehouse(values);
-  
-      if (res.status === 201) {
-        message.success(res.data.message);
-        setTimeout(() => {
-          navigate("/");
-        }, 2000);
-      } else {
-        message.error(res.data.error);
-      }
-    } catch (errorInfo) {
-      // Handle validation errors
-      console.error("Validation failed:", errorInfo);
-    }
-  };
-
-  const handleModalCancel = () => {
-    // Close the modal and reset the form
-    setIsModalVisible(false);
-    form.resetFields();
-  };
-
-///-------------------ส่วนแก้ไข--------------//
 
 
   return (
@@ -465,7 +408,6 @@ useEffect(() => {
             rowKey="ID"
           />
         </Card>
-      </Content>
 
       <Modal
         visible={isModalVisible}
@@ -499,16 +441,7 @@ useEffect(() => {
       Add New Warehouse
     </h2>
     </div >
-      <Form form={form} layout="vertical" onFinish={onFinish} autoComplete="off"
-       initialValues={{
-        WarehouseName: '',
-        WarehouseTypeID: undefined,
-        WarehouseStatusID: undefined,
-        Capacity: undefined,
-        Address: '',
-        Zipcode: '',
-        ProvinceID: undefined,
-      }}>
+      <Form form={form} layout="vertical">
         {/* Row 1: WarehouseName */}
         <Form.Item
           name="WarehouseName"
@@ -599,6 +532,7 @@ useEffect(() => {
       </Form>
       </Card>
     </Modal>
+    </Content>
     </Layout>
   );
 }
