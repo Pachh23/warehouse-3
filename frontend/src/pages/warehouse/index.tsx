@@ -1,16 +1,16 @@
 import { useState, useEffect, useMemo } from "react";
 import { Layout, Typography, Input, Button, Table, Space, Image, Modal, Form, Select, Tag, Card, message, InputNumber } from 'antd';
-import { PlusOutlined, SearchOutlined, UserOutlined, DeleteTwoTone, DeleteFilled, EditTwoTone } from '@ant-design/icons';
+import { PlusOutlined, SearchOutlined, UserOutlined, DeleteTwoTone, DeleteFilled, EditTwoTone, SaveOutlined, PauseOutlined, HomeOutlined} from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import logo from "../../assets/logo.png";
 import w1 from "../../assets/w1.png";
-import { GetWarehouseTypes,GetWarehouseStatuses,GetProvince,CreateWarehouse } from '../../services/https';
+import { GetWarehouseTypes,GetWarehouseStatuses,GetProvince,CreateWarehouse,UpdateWarehousesById,GetWarehousesById } from '../../services/https';
 import { WarehouseStatusesInterface } from "../../interfaces/WarehouseStatuses";
 import { ProvinceInterface } from "../../interfaces/Province";
 import { WarehousesInterface } from "../../interfaces/Warehouses";
 import { WarehouseTypesInterface } from "../../interfaces/WarehouseTypes";
 import { GetWarehouses, DeleteWarehousesById } from "../../services/https";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 
 const { Header, Content } = Layout;
 const { Title, Paragraph } = Typography;
@@ -40,6 +40,7 @@ function WarehouseManagement() {
   const [warehouseType, setWarehouseType] = useState<WarehouseTypesInterface[]>([]);
   const [province, setGetProvince] = useState<ProvinceInterface[]>([]);
   const [form] = Form.useForm();
+  const { id } = useParams<{ id: any }>();
 
 
 //---------onGetWarehouseStatus--------//
@@ -53,7 +54,7 @@ const onGetWarehouseStatus = async () => {
       content: "ไม่พบข้อมูลสถานะ",
     });
     setTimeout(() => {
-      navigate("/warehouse");
+      navigate("/");
     }, 2000);
   }
 };
@@ -69,7 +70,7 @@ if (res.status == 200) {
     content: "ไม่พบข้อมูลสถานะ",
   });
   setTimeout(() => {
-    navigate("/warehouse");
+    navigate("/");
   }, 2000);
 }
 };
@@ -85,7 +86,7 @@ if (res.status == 200) {
     content: "ไม่พบข้อมูลสถานะ",
   });
   setTimeout(() => {
-    navigate("/warehouse");
+    navigate("/");
   }, 2000);
 }
 };
@@ -94,6 +95,7 @@ useEffect(() => {
   onGetWarehouseStatus(),onGetWarehouseType(),onGetProvince();
   return () => {};
 }, []);
+
   // ใช้ useMemo เพื่อ optimize performance ในการ filter ข้อมูล
   const filteredWarehouses = useMemo(() => {
     const lowercaseQuery = searchQuery.toLowerCase().trim();
@@ -121,6 +123,116 @@ useEffect(() => {
     setSearchQuery(value);
   };
   
+  const getWarehouseById = async (id: string) => {
+    let res = await GetWarehousesById(id);
+    if (res.status == 200) {
+      form.setFieldsValue({
+        WarehouseName: res.data.WarehouseName,
+        WarehouseTypeID: res.data.WarehouseType?.ID,
+        WarehouseStatusID: res.data.WarehouseStatus?.ID,
+        Capacity: res.data.Capacity,
+        Address: res.data.Address,
+        Zipcode: res.data.Zipcode,
+        ProvinceID: res.data.ProvinceID?.ID,
+      });
+    } else {
+      messageApi.open({
+        type: "error",
+        content: "ไม่พบข้อมูลผู้ใช้",
+      });
+      setTimeout(() => {
+        navigate("/");
+      }, 2000);
+    }
+  };
+
+  const onFinish = async (values: WarehousesInterface) => {
+    try {
+      const res = await UpdateWarehousesById(id, values);
+      if (res.status === 200) {
+        messageApi.open({
+          type: 'success',
+          content: res.data.message,
+        });
+        setTimeout(() => {
+          navigate('/');
+        }, 2000);
+      } else {
+        throw new Error(res.data.error);
+      }
+    } catch (error: any) {
+      messageApi.open({
+        type: 'error',
+        content: error.message || 'Update failed!',
+      });
+    }
+  };
+  
+  const getWarehouses = async () => {
+    let res = await GetWarehouses();
+    if (res.status === 200) {
+      console.log('Warehouses data:', res.data);
+      setWarehouses(res.data);
+    } else {
+      setWarehouses([]);
+      messageApi.open({
+        type: 'error',
+        content: res.data.error,
+      });
+    }
+  };
+  
+  useEffect(() => {
+    getWarehouses(),getWarehouseById(id);
+  }, []);
+  
+  const deleteWarehouseById = async (id: string) => {
+    let res = await DeleteWarehousesById(id);
+    if (res.status == 200) {
+      messageApi.open({
+        type: "success",
+        content: res.data.message,
+      });
+      await getWarehouses();
+    } else {
+      messageApi.open({
+        type: "error",
+        content: res.data.error,
+      });
+    }
+  };
+  
+  const handleAddWarehouse = () => {
+    setIsModalVisible(true);
+  };
+
+  const handleModalOk = async () => {
+    try {
+      // Validate and collect the form values
+      const values: WarehousesInterface = await form.validateFields();
+      let res = await CreateWarehouse(values);
+  
+      if (res.status === 201) {
+        message.success(res.data.message);
+        setTimeout(() => {
+          navigate("/");
+        }, 2000);
+      } else {
+        message.error(res.data.error);
+      }
+    } catch (errorInfo) {
+      // Handle validation errors
+      console.error("Validation failed:", errorInfo);
+    }
+  };
+
+  const handleModalCancel = () => {
+    // Close the modal and reset the form
+    setIsModalVisible(false);
+    form.resetFields();
+  };
+
+///-------------------ส่วนแก้ไข--------------//
   const columns: ColumnsType<WarehousesInterface> = [
     {
       title: 'ID',
@@ -135,8 +247,8 @@ useEffect(() => {
     },      
     {
       title: 'Warehouse Name',
-      dataIndex: 'warehouse_name',  // แก้ไขจาก WarehouseName
-      key: 'warehouse_name',
+      dataIndex: 'WarehouseName',  // แก้ไขจาก WarehouseName
+      key: 'WarehouseName',
       // ...
       sorter: (a, b) => {
         if (!a.WarehouseName || !b.WarehouseName) {  // แก้ไขการอ้างอิง
@@ -162,7 +274,7 @@ useEffect(() => {
         }
     
         return (
-          <Tag bordered={true} color={color}>
+          <Tag bordered={false} color={color}>
             {type}
           </Tag>
         );
@@ -213,7 +325,7 @@ useEffect(() => {
       key: 'address',
       render: (record) => (
         <div style={{ maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-          {record.address}, {record.zipcode}, {record?.province?.province}
+          {record.address}, {record?.Province?.Province}, {record.zipcode}
         </div>
       ),
     },
@@ -223,80 +335,18 @@ useEffect(() => {
       width: 140,
       render: (record) => (
         <Space size="middle">
-          <Button type="link"><EditTwoTone twoToneColor="#10515F" /></Button>
-          <Button onClick={() => deleteUserById(record.ID)}>
+          <Button onClick={() => (record.ID)}>
+            <EditTwoTone twoToneColor="#10515F" /></Button>
+          <Button onClick={() => deleteWarehouseById(record.ID)}>
             <DeleteTwoTone twoToneColor="#FF7236" />
           </Button>
         </Space>
       ),
     },
   ];
-
-  const getWarehouses = async () => {
-    let res = await GetWarehouses();
-    if (res.status === 200) {
-      console.log('Warehouses data:', res.data);
-      setWarehouses(res.data);
-    } else {
-      setWarehouses([]);
-      messageApi.open({
-        type: 'error',
-        content: res.data.error,
-      });
-    }
-  };
   
-  useEffect(() => {
-    getWarehouses();
-  }, []);
-  
-  const deleteUserById = async (id: string) => {
-    let res = await DeleteWarehousesById(id);
-    if (res.status == 200) {
-      messageApi.open({
-        type: "success",
-        content: res.data.message,
-      });
-      await getWarehouses();
-    } else {
-      messageApi.open({
-        type: "error",
-        content: res.data.error,
-      });
-    }
-  };
-  
-  const handleAddWarehouse = () => {
-    setIsModalVisible(true);
-  };
 
-  const handleModalOk = () => {
-    form
-      .validateFields()
-      .then((values) => {
-        const { province, zipcode } = values;
-        const address = `${values.address}, ${province}, ${zipcode}`;
-        
-        setWarehouses([
-          ...warehouses,
-          {
-            key: Date.now().toString(),
-            id: `W-${warehouses.length + 1}`,
-            ...values,
-            address,
-          },
-        ]);
-        form.resetFields();
-        setIsModalVisible(false);
-      })
-      .catch((info) => {
-        console.log('Validate Failed:', info);
-      });
-  };
 
-  const handleModalCancel = () => {
-    setIsModalVisible(false);
-  };
 
   return (
     <Layout style={{ minHeight: '100vh', backgroundColor: '#FFFFFF' }}>
@@ -423,119 +473,125 @@ useEffect(() => {
         visible={isModalVisible}
         onOk={handleModalOk}
         onCancel={handleModalCancel}
-        okText="Save"
+        okText={
+          <span>
+            <SaveOutlined style={{ marginRight: 10 }} />
+            Save
+          </span>
+        }
         cancelText="Cancel"
         okButtonProps={{
-          style: { backgroundColor: '#FF7236', color: 'white', borderColor: '#FF7236' }, // สีปุ่ม OK
+          style: { backgroundColor: '#FF7236', color: 'white', borderColor: '#FF7236' },
         }}
         cancelButtonProps={{
-          style: { backgroundColor: '#FFFFFF', color: 'black', borderColor: '#FF7236' }, // สีปุ่ม Cancel
+          style: { backgroundColor: '#FFFFFF', color: 'black', borderColor: '#FF7236' },
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', marginBottom: '0rem' }}>
-        <img 
-          alt="Logo"
-          src={logo}
-          style={{
-            width: '150px',
-            height: 'auto',
-            marginLeft: '-10px',
-          }}
-        />
-        <h2>Add New Warehouse</h2>
-      </div>
-      <Form form={form} layout="vertical">
+      <Card
+        style={{
+          backgroundColor: '#FFFFFF',  // กำหนดสีพื้นหลังที่นี่
+          borderRadius: '8px',  // เพิ่มขอบมุมโค้ง (ถ้าต้องการ)
+          padding: '0px',  // เพิ่ม padding เพื่อให้เนื้อหาดูไม่ติดขอบ
+          border: '2px solid #f0f0f0',  // กำหนดสีขอบของ card
+        }}
+      >
+    <div style={{ display: 'flex', alignItems: 'center', marginBottom: '0rem' }}>
+    <h2 style={{ marginBottom: '10px', display: 'flex', alignItems: 'center' }}>
+      <HomeOutlined style={{ marginRight: '10px', color: '#FF7236' }} /> {/* ไอคอนที่เพิ่มมา */}
+      Add New Warehouse
+    </h2>
+    </div >
+      <Form form={form} layout="vertical" onFinish={onFinish} autoComplete="off">
+        {/* Row 1: WarehouseName */}
         <Form.Item
-            name="name"
-            label="Warehouse Name"
-            rules={[{ required: true, message: 'Please input the warehouse name!' }]}
-          >
-            <Input />
-          </Form.Item>
+          name="WarehouseName"
+          label="Warehouse Name"
+          rules={[{ required: true, message: 'Please input the warehouse name!' }]}
+        >
+          <Input />
+        </Form.Item>
+
+        {/* Row 2: WarehouseTypeID, WarehouseStatusID */}
+        <div style={{ display: 'flex', gap: '1rem' }}>
           <Form.Item
-            name="type"
+            name="WarehouseTypeID"
             label="Type"
+            style={{ flex: 1 }}
             rules={[{ required: true, message: 'Please select warehouse type!' }]}
           >
-            <Select defaultValue="" style={{ width: "100%" }}>
-                  {warehouseType?.map((item) => (
-                    <Select.Option
-                      value={item?.ID}
-                    >
-                      {item?.WarehouseType}
-                    </Select.Option>
-                  ))}
-              </Select>
-          </Form.Item>
-          <Form.Item
-            name="capacity"
-            label="Capacity"
-            rules={[{ required: true, message: 'Please input the warehouse capacity!' }]}
-          >
-            <InputNumber
-                  min={0}
-                  //max={99}
-                  defaultValue={0}
-                  style={{ width: "100%" }}
-                />
+            <Select placeholder="Select Type" style={{ width: '100%' }}>
+              {warehouseType?.map((item) => (
+                <Select.Option value={item?.ID} key={item?.ID}>
+                  {item?.WarehouseType}
+                </Select.Option>
+              ))}
+            </Select>
           </Form.Item>
           <Form.Item
             name="WarehouseStatusID"
             label="Status"
+            style={{ flex: 1 }}
             rules={[{ required: true, message: 'Please select warehouse status!' }]}
           >
-            <Select defaultValue="" style={{ width: "100%" }}>
-                  {warehouseStatus?.map((item) => (
-                    <Select.Option
-                      value={item?.ID}
-                    >
-                      {item?.WarehouseStatus}
-                    </Select.Option>
-                  ))}
-                </Select>
+            <Select placeholder="Select Status" style={{ width: '100%' }}>
+              {warehouseStatus?.map((item) => (
+                <Select.Option value={item?.ID} key={item?.ID}>
+                  {item?.WarehouseStatus}
+                </Select.Option>
+              ))}
+            </Select>
           </Form.Item>
-          <Form.Item
-            name="address"
-            label="Address"
-            rules={[{ required: true, message: 'Please input the warehouse address!' }]}
-          >
-            <Input />
-          </Form.Item>
+        </div>
+
+        {/* Row 3: Capacity */}
+        <Form.Item
+          name="capacity"
+          label="Capacity"
+          rules={[{ required: true, message: 'Please input the warehouse capacity!' }]}
+        >
+          <InputNumber min={0} defaultValue={0} style={{ width: '100%' }} />
+        </Form.Item>
+
+        {/* Row 4: Address */}
+        <Form.Item
+          name="address"
+          label="Address"
+          rules={[{ required: true, message: 'Please input the warehouse address!' }]}
+        >
+          <Input style={{ width: '100%' }} />
+        </Form.Item>
+        
+        {/* Row 5: Province, Zipcode */}
+        <div style={{ display: 'flex', gap: '1rem' }}>
           <Form.Item
             name="ProvinceID"
             label="Province"
+            style={{ flex: 1 }}
             rules={[{ required: true, message: 'Please select the province!' }]}
           >
-            <Select defaultValue="" style={{ width: "100%" }}>
-                  {province?.map((item) => (
-                    <Select.Option
-                      value={item?.ID}
-                    >
-                      {item?.Province}
-                    </Select.Option>
-                  ))}
-                </Select>
+            <Select placeholder="Select Province" style={{ width: '100%' }}>
+              {province?.map((item) => (
+                <Select.Option value={item?.ID} key={item?.ID}>
+                  {item?.Province}
+                </Select.Option>
+              ))}
+            </Select>
           </Form.Item>
           <Form.Item
             name="zipcode"
             label="Zipcode"
+            style={{ flex: 1 }}
             rules={[
-              { 
-                required: true, 
-                message: 'Please input the zipcode!' 
-              },
-              { 
-                pattern: /^\d{5}$/, 
-                message: 'Zipcode must be 5 digits!' 
-              }
+              { required: true, message: 'Please input the zipcode!' },
+              { pattern: /^\d{5}$/, message: 'Zipcode must be 5 digits!' },
             ]}
           >
-            <Input 
-              type="text" // ใช้ type="text" แทน type="number" เพื่อให้สามารถใช้ pattern ได้
-            />
+            <Input placeholder="Enter 5-digit zipcode" type="text" />
           </Form.Item>
-        </Form>
-      </Modal>
+        </div>
+      </Form>
+      </Card>
+    </Modal>
     </Layout>
   );
 }
