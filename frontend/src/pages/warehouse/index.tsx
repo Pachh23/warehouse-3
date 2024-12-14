@@ -130,24 +130,24 @@ const WarehouseManagement: React.FC = () => {
     setIsModalVisible(false);
     form.resetFields();
   };
+// Create Warehouse
+const handleModalOk = async () => {
+  try {
+    const values: WarehousesInterface = await form.validateFields();
+    const res = await CreateWarehouse(values);
 
-  // Create Warehouse
-  const handleModalOk = async () => {
-    try {
-      const values: WarehousesInterface = await form.validateFields();
-      const res = await CreateWarehouse(values);
-
-      if (res.status === 201) {
-        message.success(res.data.message);
-        setIsModalVisible(false);
-        getWarehouses();
-      } else {
-        message.error(res.data.error);
-      }
-    } catch (errorInfo) {
-      console.error("Validation failed:", errorInfo);
+    if (res.status === 201) {
+      message.success(res.data.message);
+      setIsModalVisible(false);
+      form.resetFields(); // เคลียร์ข้อมูลในฟอร์ม
+      getWarehouses();
+    } else {
+      message.error(res.data.error);
     }
-  };
+  } catch (errorInfo) {
+    console.error("Validation failed:", errorInfo);
+  }
+};
 
   // Delete Warehouse
   const deleteWarehouseById = async (id: string) => {
