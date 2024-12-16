@@ -24,7 +24,7 @@ func Get(c *gin.Context) {
 	ID := c.Param("id")
 	var warehouse entity.Warehouses
 	db := config.DB()
-	results := db.Preload("Province").Preload("WarehouseType").First(&warehouse, ID)
+	results := db.Preload("Province").Preload("WarehouseType").Preload("WarehouseStatus").First(&warehouse, ID)
 
 	if results.Error != nil {
 		// ถ้ามีข้อผิดพลาดในการดึงข้อมูลจากฐานข้อมูล
